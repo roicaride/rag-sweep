@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import json; data = json.load\\(open\\('c:/Users/roica/Desktop/Roi/TFG/rag-eval/data/03_primary/gold_dataset.json'\\)\\); print\\(f'Total QA pairs: {len\\(data\\)}'\\); print\\('Keys:', list\\(data[0].keys\\(\\)\\)\\); synths = {}; [synths.update\\({d['synthesizer_name']: synths.get\\(d['synthesizer_name'],0\\)+1}\\) for d in data]; print\\('Synthesizers:', synths\\)\")",
+      "Bash(python -c \"import json; data = [json.loads\\(l\\) for l in open\\('c:/Users/roica/Desktop/Roi/TFG/rag-eval/data/02_intermediate/corpus_copyright.jsonl'\\) if l.strip\\(\\)]; print\\(f'copyright corpus: {len\\(data\\)} docs'\\); forms = {}; [forms.update\\({d['form']: forms.get\\(d['form'],0\\)+1}\\) for d in data]; print\\('Top forms:', sorted\\(forms.items\\(\\), key=lambda x:-x[1]\\)[:5]\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import ragas; print\\(ragas.__version__\\)\")",
+      "Bash(python -c \"import langchain_community; print\\('langchain-community ok'\\)\")",
+      "Bash(python -c \"import faiss; print\\('faiss ok'\\)\")",
+      "Bash(python -c \"import mlflow; print\\('mlflow ok'\\)\")",
+      "Bash(python -c \"import langchain_text_splitters; print\\('langchain-text-splitters ok'\\)\")",
+      "Bash(python -c \"import faiss; print\\(faiss.__version__\\)\")",
+      "Bash(python -c \"import langchain_openai; print\\('langchain-openai ok'\\)\")",
+      "Bash(python -c \"import faiss; import mlflow; print\\('faiss', faiss.__version__\\); print\\('mlflow', mlflow.__version__\\)\")",
+      "Bash(python -m pytest tests/pipelines/rag_base/test_nodes.py -v)",
+      "Bash(python -c \"import rag_eval; print\\(rag_eval.__file__\\)\")",
+      "Bash(python -c \"from rag_eval.pipelines.rag_base.nodes import chunk_documents, build_index, run_rag, evaluate_ragas; print\\('all 4 nodes ok'\\)\")",
+      "Bash(kedro pipeline *)",
+      "Bash(python -c \"from rag_eval.pipelines.rag_base.nodes import chunk_documents, build_index, run_rag, evaluate_ragas; print\\('ok'\\)\")",
+      "Bash(python -m pytest tests/pipelines/rag_base/test_nodes.py -q)",
+      "WebSearch",
+      "WebFetch(domain:sambanova.ai)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\roica\\.claude\\projects\\c--Users-roica-Desktop-Roi-TFG-rag-eval\\memory"
+    ]
+  }
+}

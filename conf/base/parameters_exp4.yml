@@ -1,0 +1,83 @@
+# exp4 — Query expansion (pre-retrieval). Etapa upstream: transforma a query ANTES
+# de recuperar. Cada técnica = un experimento (clave) propio, avaliado individualmente.
+# Todas herdan embedding+chunking+retrieval gañadores (carry) e reutilizan o índice
+# 256+bge-m3. A transform usa DeepSeek; recupera co retriever base (mmr gañador).
+
+# exp4a — HyDE: o LLM xera un pasaxe hipotético que responde a query; EMBÉBESE
+# ese pasaxe (en vez da query) e recupérase con mmr.
+exp4a__hyde:
+  experiment_id: "exp4a__hyde"
+  embedding: {}
+  query_transform:
+    type: hyde
+    llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 1024, base_url: "https://api.deepseek.com"}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+# exp4b — Multi-Query: N variantes da query; recupera con cada unha e fusiona por
+# unión round-robin + dedup → top_k.
+exp4b__multiquery:
+  experiment_id: "exp4b__multiquery"
+  embedding: {}
+  query_transform:
+    type: multiquery
+    n_queries: 4
+    llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 1024, base_url: "https://api.deepseek.com"}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+# exp4c — RAG-Fusion: como multi-query pero a fusión é Reciprocal Rank Fusion (RRF).
+exp4c__rag_fusion:
+  experiment_id: "exp4c__rag_fusion"
+  embedding: {}
+  query_transform:
+    type: rag_fusion
+    n_queries: 4
+    llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 1024, base_url: "https://api.deepseek.com"}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+# exp4d — Query Rewriting: reescribe a query (máis clara, mesmo intent) e recupera
+# con esa única query reescrita.
+exp4d__rewrite:
+  experiment_id: "exp4d__rewrite"
+  embedding: {}
+  query_transform:
+    type: rewrite
+    llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 1024, base_url: "https://api.deepseek.com"}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+# exp4e — Step-Back: o LLM xera unha pregunta máis xeral; recupera coa orixinal
+# E coa step-back, fusionando por RRF → top_k.
+exp4e__stepback:
+  experiment_id: "exp4e__stepback"
+  embedding: {}
+  query_transform:
+    type: stepback
+    llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 1024, base_url: "https://api.deepseek.com"}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+# exp4f — Decomposition: descompón a query en N sub-preguntas; recupera con cada unha
+# e fusiona por RRF → top_k.
+exp4f__decomposition:
+  experiment_id: "exp4f__decomposition"
+  embedding: {}
+  query_transform:
+    type: decomposition
+    n_queries: 3
+    llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 1024, base_url: "https://api.deepseek.com"}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+# exp4g — Self-Query: o LLM extrae un filtro de metadata (family/form, vocabulario
+# controlado) + unha query semántica limpa; busca densa filtrada en Qdrant → top_k.
+exp4g__selfquery:
+  experiment_id: "exp4g__selfquery"
+  embedding: {}
+  query_transform:
+    type: selfquery
+    llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 1024, base_url: "https://api.deepseek.com"}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}

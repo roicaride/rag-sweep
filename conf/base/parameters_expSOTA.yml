@@ -1,0 +1,38 @@
+# expSOTA — Stack "todo o máis SOTA sobre o papel" (maximalista).
+# Combina a técnica MÁIS AVANZADA de cada dimensión (non os gañadores empíricos),
+# para contrastar coa cadea empírica (exp5b · bge-m3+fixed+mmr+CE · P+R 1.203):
+#   - embedding   : Qwen3-Embedding-8B   (top MTEB)
+#   - chunking    : semantic             (fronteiras semánticas, embedding-based)
+#   - retrieval   : hybrid               (denso + BM25, fusión RRF)
+#   - query_transform: rag_fusion        (multi-query + RRF, técnica SOTA establecida)
+#   - rerank      : LLM listwise         (RankGPT — reranker xenerativo, o máis SOTA)
+#
+# É un EXPERIMENTO COMPLETO: re-indexa (semantic + qwen3 → colección 'expSOTA').
+# Pipeline en run_rag: rag_fusion (sobre hybrid) -> pool fetch_k -> LLM rerank -> top_k.
+
+expSOTA:
+  experiment_id: "expSOTA"
+  embedding:
+    model: "Qwen/Qwen3-Embedding-8B"     # mellor sobre o papel (MTEB)
+    batch_size: 16
+  chunking:
+    strategy: semantic
+    breakpoint_model: "sentence-transformers/all-MiniLM-L6-v2"   # local, só breakpoints
+    breakpoint_type: percentile
+    chunk_size: 512
+    chunk_overlap: 50
+    tokenizer_model: "BAAI/bge-m3"
+  retrieval:
+    strategy: hybrid
+    top_k: 10
+  query_transform:
+    type: rag_fusion
+    n_queries: 4
+    llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 1024, base_url: "https://api.deepseek.com"}
+  rerank:
+    type: llm
+    llm: {model: "deepseek-v4-flash", base_url: "https://api.deepseek.com"}
+    fetch_k: 20
+    top_k: 10
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}

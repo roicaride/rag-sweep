@@ -1,0 +1,29 @@
+# exp1 — Comparativa de modelos de embedding (primeira fase de experimentación)
+# Chunking fixado ao baseline (fixed_size 256, ≤512 → xusto para os 4 modelos, ningún trunca).
+# Retrieval fixado ao baseline (cosine k=5). Xuíz RAGAS: gemini-2.5-flash.
+# bge-base NON se repite aquí: é idéntico a exp0 e reutilízase como a súa columna.
+# qwen3-8b vía Scaleway; o resto vía HF Inference API.
+
+exp1__snowflake_arctic_l:
+  experiment_id: "exp1__snowflake_arctic_l"
+  chunking: {strategy: fixed_size, chunk_size: 256, chunk_overlap: 25, tokenizer_model: "BAAI/bge-base-en-v1.5"}
+  embedding: {model: "Snowflake/snowflake-arctic-embed-l-v2.0", batch_size: 32}
+  retrieval: {strategy: cosine, top_k: 5}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+exp1__bge_m3:
+  experiment_id: "exp1__bge_m3"
+  chunking: {strategy: fixed_size, chunk_size: 256, chunk_overlap: 25, tokenizer_model: "BAAI/bge-base-en-v1.5"}
+  embedding: {model: "BAAI/bge-m3", batch_size: 32}
+  retrieval: {strategy: cosine, top_k: 5}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+exp1__qwen3_8b:
+  experiment_id: "exp1__qwen3_8b"
+  chunking: {strategy: fixed_size, chunk_size: 256, chunk_overlap: 25, tokenizer_model: "BAAI/bge-base-en-v1.5"}
+  embedding: {model: "Qwen/Qwen3-Embedding-8B", batch_size: 16}
+  retrieval: {strategy: cosine, top_k: 5}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}

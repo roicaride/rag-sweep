@@ -1,0 +1,43 @@
+# exp5 — Reranking (avanzado). Herda embedding+chunking+retrieval gañadores (carry).
+# Etapa downstream (post-retrieval). Cascada (ver docs/specs/reranking_decision.txt):
+#   pool 50 (1ª etapa) -> 20 (MMR diversos, 2ª etapa) -> reranker -> top_k 10/5 (3ª etapa)
+# pool só o usa mmr (única estratexia con etapa de selección). Reutiliza índice 256+bge-m3.
+# Próbase o k final (5 vs 10) XUNTO co tipo de reranker (CE vs LLM).
+
+exp5a__rerank_ce_k5:
+  experiment_id: "exp5a__rerank_ce_k5"
+  embedding: {}
+  rerank: {type: cross_encoder, model: "BAAI/bge-reranker-v2-m3", pool: 50, fetch_k: 20, top_k: 5}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+exp5b__rerank_ce_k10:
+  experiment_id: "exp5b__rerank_ce_k10"
+  embedding: {}
+  rerank: {type: cross_encoder, model: "BAAI/bge-reranker-v2-m3", pool: 50, fetch_k: 20, top_k: 10}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+exp5c__rerank_llm_k5:
+  experiment_id: "exp5c__rerank_llm_k5"
+  embedding: {}
+  rerank:
+    type: llm
+    llm: {model: "deepseek-v4-flash", base_url: "https://api.deepseek.com"}
+    pool: 50
+    fetch_k: 20
+    top_k: 5
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+exp5d__rerank_llm_k10:
+  experiment_id: "exp5d__rerank_llm_k10"
+  embedding: {}
+  rerank:
+    type: llm
+    llm: {model: "deepseek-v4-flash", base_url: "https://api.deepseek.com"}
+    pool: 50
+    fetch_k: 20
+    top_k: 10
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}

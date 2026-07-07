@@ -1,0 +1,107 @@
+================================================================================
+DECISIÓN DE DISEÑO — Cascada de reranking (exp5)
+TFG · RAG eval EUR-Lex copyright
+================================================================================
+
+RESUMEN
+-------
+La etapa de reranking (exp5) se implementa como una CASCADA multi-etapa tipo
+embudo, donde cada etapa aporta una señal complementaria y reduce el conjunto:
+
+    Etapa 1 — RECALL        : recuperar 50 candidatos (retriever ganador)
+    Etapa 2 — DIVERSIDAD    : MMR selecciona 20 (reduce redundancia)
+    Etapa 3 — PRECISIÓN     : cross-encoder / LLM reordena -> top 10 (ó 5)
+
+Es decir:  50  ->  20 (MMR)  ->  10 / 5 (rerank)
+
+
+1. POR QUÉ "RETRIEVE-AND-RERANK" (recuperar ancho, afinar estrecho)
+------------------------------------------------------------------
+El paradigma estándar de recuperación de 2+ etapas separa responsabilidades:
+  - 1ª etapa (bi-encoder / BM25): barata, optimiza RECALL. Trae muchos
+    candidatos porque su objetivo es no dejarse fuera lo relevante.
+  - 2ª etapa (cross-encoder): cara pero precisa; lee (query, doc) JUNTOS y
+    re-puntúa, comprimiendo a un conjunto pequeño y de alta confianza.
+
+La práctica habitual recupera N=50–200 candidatos y los comprime a K=5–10
+(ratios típicos ~10:1). El valor del reranking viene de "un conjunto grande y
+ruidoso -> uno pequeño y preciso".
+
+
+2. POR QUÉ INTRODUCIR MMR ENTRE MEDIAS (3 etapas, no 2)
+------------------------------------------------------
+MMR y el cross-encoder son COMPLEMENTARIOS, no redundantes:
+  - MMR mejora la DIVERSIDAD: penaliza candidatos redundantes (casi-duplicados
+    del mismo pasaje), ampliando la cobertura informativa del pool.
+  - El cross-encoder mejora la PRECISIÓN: re-evalúa la relevancia real
+    query-doc más allá del coseno.
+
+La cascada "(1) vector search -> (2) diversificación MMR -> (3) reranking
+cross-encoder" es un patrón reconocido en pipelines multi-etapa. El razonamiento:
+si el pool de 1ª etapa está lleno de near-duplicados, el cross-encoder
+"malgasta" plazas reordenando lo mismo; MMR limpia esa redundancia ANTES, de
+modo que el reranker elige entre opciones genuinamente distintas.
+
+Además, en este TFG MMR fue el RETRIEVER GANADOR de exp3 (mejor recall+precision,
+robusto a k=5 y k=10), así que mantener su etapa de diversidad es coherente con
+el arrastre de ganadores (ceteris paribus): no descartamos lo que ganó, lo
+encadenamos con la nueva técnica.
+
+
+3. JUSTIFICACIÓN DE LOS NÚMEROS (50 -> 20 -> 10/5)
+-------------------------------------------------
+Observación clave de COSTE: en esta cascada las etapas CARAS (cross-encoder /
+LLM) ven SIEMPRE 20 candidatos (la salida de MMR), independientemente del pool.
+El pool solo alimenta a MMR, que fetchea por similitud (Qdrant local, baratísimo)
+y selecciona 20. => agrandar el pool es prácticamente GRATIS en cómputo pesado.
+
+Dado eso, conviene un pool lo bastante profundo para no dejar fuera relevantes:
+
+  EVIDENCIA EMPÍRICA PROPIA (exp3): el recall NO está saturado — mmr_k10 = 0.711,
+  dense_k10 = 0.644 (lejos de 1.0). Hay material relevante MÁS ALLÁ del rango 10,
+  así que un pool profundo captura "rezagados" (p.ej. un chunk relevante en el
+  puesto ~40) que el reranker puede rescatar; con un pool corto ni se verían.
+
+Embudo elegido — 50 -> 20 -> 10/5:
+  - 50 candidatos (1ª etapa): sube el TECHO de recall sin coste en las etapas
+    caras; plenamente dentro del rango de la literatura (50–200). Y hace que la
+    poda de MMR sea REAL (50->20 descarta 30; 30->20 apenas podaba).
+  - 20 tras MMR: conjunto diverso y manejable que ve el reranker.
+  - 10 ó 5 final: presupuesto de contexto al LLM. Se prueban ambos para fijar el
+    k óptimo CON el reranker en juego (no antes).
+
+No se sube más de ~50-60 porque ahí MMR empezaría a meter candidatos poco
+relevantes por diversidad, añadiendo ruido que el reranker tendría que filtrar.
+
+
+4. GENERALIZACIÓN A CUALQUIER RETRIEVER GANADOR
+-----------------------------------------------
+La cascada se define de forma agnóstica al ganador:
+  "el retriever ganador entrega FETCH_K candidatos -> reranker -> TOP_K".
+
+  - Si el ganador es MMR: la etapa de diversidad ES intrínseca. Se fetchean POOL
+    (30) por similitud y MMR selecciona FETCH_K (20) diversos.
+  - Si el ganador es dense / bm25 / hybrid: NO tienen etapa de selección, así que
+    entregan directamente sus FETCH_K (20) mejores (top-20). POOL no aplica.
+
+Así el mismo mecanismo sirve para el ganador que resulte (hoy MMR; en un re-run
+a 150 muestras podría ser otro) sin tocar el código.
+
+
+5. PARÁMETROS RESULTANTES
+-------------------------
+  rerank:
+    pool:    50     # 1ª etapa (solo lo usa MMR para seleccionar diversos)
+    fetch_k: 20     # candidatos que ve el reranker (salida de la 2ª etapa)
+    top_k:   10 / 5 # contexto final al LLM (se prueban ambos)
+    type:    cross_encoder (bge-reranker-v2-m3, local) | llm (DeepSeek listwise)
+
+
+REFERENCIAS
+-----------
+- Towards Data Science — "Advanced RAG Retrieval: Cross-Encoders & Reranking".
+- ML Pills — "Reranking in your RAG pipeline" (pool 50–200 -> 5–10, ratio ~10:1).
+- Ailog RAG — "MMR: Diversify Search Results with Maximal Marginal Relevance".
+- Carbonell & Goldstein (1998) — "The Use of MMR, Diversity-Based Reranking..."
+- ARAGOG: Advanced RAG Output Grading (arXiv:2404.01037).
+================================================================================

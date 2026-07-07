@@ -1,0 +1,61 @@
+# exp3 — Retrieval. Varía só o retrieval (ceteris paribus). Reutiliza o índice
+# da config gañadora (chunking 256 + bge-m3) → NON re-indexa. embedding.model
+# e chunking resólvense ao gañador (carry). retrieval = a variable.
+#
+# Agrupado por ESTRATEXIA, k=5 e k=10 xuntos. Naming consistente _k5/_k10.
+# (dense k=5 = exp1__bge_m3, vive en exp1.) fetch_k só aplica a mmr (pool de
+# candidatos antes de seleccionar diversos); unificado a 30 en k5 e k10.
+# Bloque llm/ragas_llm idéntico en todas (control fixo).
+
+# ─── DENSE (cosine) ───  k=5 = exp1__bge_m3 (baseline)
+exp3__dense_k10:
+  experiment_id: "exp3__dense_k10"
+  retrieval: {strategy: cosine, top_k: 10}
+  embedding: {}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+# ─── MMR ───
+exp3__mmr_k5:
+  experiment_id: "exp3__mmr_k5"
+  retrieval: {strategy: mmr, top_k: 5, fetch_k: 30}
+  embedding: {}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+exp3__mmr_k10:
+  experiment_id: "exp3__mmr_k10"
+  retrieval: {strategy: mmr, top_k: 10, fetch_k: 30}
+  embedding: {}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+# ─── BM25 ───
+exp3__bm25_k5:
+  experiment_id: "exp3__bm25_k5"
+  retrieval: {strategy: bm25, top_k: 5}
+  embedding: {}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+exp3__bm25_k10:
+  experiment_id: "exp3__bm25_k10"
+  retrieval: {strategy: bm25, top_k: 10}
+  embedding: {}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+# ─── HYBRID (BM25 + denso, RRF) ───
+exp3__hybrid_k5:
+  experiment_id: "exp3__hybrid_k5"
+  retrieval: {strategy: hybrid, top_k: 5}
+  embedding: {}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+exp3__hybrid_k10:
+  experiment_id: "exp3__hybrid_k10"
+  retrieval: {strategy: hybrid, top_k: 10}
+  embedding: {}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}

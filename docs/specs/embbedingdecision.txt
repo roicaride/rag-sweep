@@ -1,0 +1,191 @@
+================================================================================
+  DECISIONES DE EMBEDDING — TFG RAG
+  Corpus: inglés · Evaluación: RAGAS · Fuente rankings: MTEB Leaderboard
+================================================================================
+
+CRITERIOS DE SELECCIÓN
+buscados en el ranking de referencia del sector: https://huggingface.co/spaces/mteb/leaderboard
+  1. Corpus en inglés — se descartan modelos orientados exclusivamente a multilingüe
+  2. Modelos con paper publicado y documentación seria — descartados tops sin respaldo
+     (Octen-Embedding-8B #1, MoD-Embedding #10, etc. — sin paper ni uso documentado)
+  3. Progresión clara desde baseline naive hasta techo open-source
+  4. Todos accesibles vía HuggingFace Inference API con una sola key
+  5. Verificación en vivo de disponibilidad real en la API antes de confirmar
+
+
+================================================================================
+MODELOS SELECCIONADOS (verificados y funcionales)
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+#1 — BASELINE CLÁSICO (referencia de mínimo)
+────────────────────────────────────────────────────────────────────────────────
+  Modelo:      bge-base-en-v1.5
+  HF ID:       BAAI/bge-base-en-v1.5
+  MTEB Rank:   #59 / 251
+  Params:      0.086B activos (86M)
+  Dimensions:  768
+  Context:     512 tokens
+  Familia:     BGE v1.5 (BAAI, 2023)
+  Provider:    hf-inference
+
+  Por qué:
+  Primera generación del linaje BGE de BAAI — la misma organización que produce
+  bge-m3 (#3 en esta selección). Permite aislar directamente el avance entre
+  versiones del mismo linaje (v1.5 → m3) sin cambiar de familia ni de proveedor.
+  Ampliamente citado en literatura RAG como baseline de referencia previo a la
+  era multi-vector. 512 tokens de contexto: sin truncación con chunks de 512.
+
+  Posición en el ranking: Borda #59, claramente inferior a Snowflake (#47) y
+  bge-m3 (#49), con 3.6× menos parámetros que ambos. La diferencia de calidad
+  con bge-m3 es atribuible exclusivamente al avance en técnicas de entrenamiento
+  (dense+sparse+ColBERT en m3 vs solo dense en v1.5).
+
+────────────────────────────────────────────────────────────────────────────────
+#2 — EFICIENCIA SORPRESA
+────────────────────────────────────────────────────────────────────────────────
+  Modelo:      snowflake-arctic-embed-l-v2.0
+  HF ID:       Snowflake/snowflake-arctic-embed-l-v2.0
+  MTEB Rank:   #47 / 251
+  Params:      0.312B (activos)
+  Dimensions:  1024
+  Context:     8,192 tokens
+  Familia:     Snowflake Arctic Embed v2 (Snowflake)
+  Provider:    hf-inference
+
+  Por qué:
+  Supera a bge-m3 en el ranking MTEB (#47 vs #49) con el mismo número de
+  parámetros (0.312B). Demuestra que el avance no es solo función de los
+  parámetros sino de la estrategia de entrenamiento — punto relevante para
+  el análisis del TFG. Paper publicado, empresa con credibilidad técnica.
+
+────────────────────────────────────────────────────────────────────────────────
+#3 — REFERENTE DEL SECTOR
+────────────────────────────────────────────────────────────────────────────────
+  Modelo:      bge-m3
+  HF ID:       BAAI/bge-m3
+  MTEB Rank:   #49 / 251
+  Params:      0.312B (activos)
+  Dimensions:  1024
+  Context:     8,194 tokens
+  Familia:     BGE (BAAI)
+  Provider:    hf-inference
+
+  Por qué:
+  Estándar de facto en RAG. Único modelo que soporta simultáneamente retrieval
+  denso, sparse (BM25-style) y ColBERT multi-vector en un solo modelo, lo que
+  lo hace especialmente relevante para el bloque de retrieval híbrido del TFG.
+  Ampliamente citado en literatura — base de comparación obligatoria.
+
+────────────────────────────────────────────────────────────────────────────────
+#4 — TECHO OPEN-SOURCE
+────────────────────────────────────────────────────────────────────────────────
+  Modelo:      Qwen3-Embedding-8B
+  HF ID:       Qwen/Qwen3-Embedding-8B
+  MTEB Rank:   #12 / 251
+  Params:      6.946B (activos)
+  Dimensions:  4096
+  Context:     32,768 tokens
+  Familia:     Qwen3 Embedding (Alibaba)
+  Provider:    Scaleway (via HF routing)
+
+  Por qué:
+  Mejor modelo open-source con paper publicado y respaldo institucional sólido.
+  Supera en MTEB a modelos API comerciales (OpenAI text-embedding-3-large #33,
+  Google text-embedding-005 #31). Techo del experimento — establece el límite
+  superior de calidad alcanzable sin infraestructura dedicada.
+
+
+================================================================================
+NARRATIVA ACADÉMICA DEL CONJUNTO
+================================================================================
+
+  El conjunto de 4 modelos permite tres líneas de análisis independientes:
+
+  A) Evolución de linaje (misma familia, distintas generaciones):
+     bge-base-en-v1.5 (BGE v1, dense only) → bge-m3 (BGE v3, dense+sparse+ColBERT)
+     Diferencia atribuible al avance en técnicas de entrenamiento, no al tamaño.
+
+  B) Eficiencia cruzada (distinta familia, mismo tamaño):
+     Snowflake (#47) vs bge-m3 (#49) con 0.312B cada uno.
+     Diferencia atribuible al diseño de entrenamiento entre familias.
+
+  C) Scaling absoluto y coste-beneficio:
+     bge-base-en-v1.5 (86M) → Snowflake/bge-m3 (312M) → Qwen3-8B (7B)
+     Qwen3-8B requiere Scaleway y mayor latencia.
+     ¿El delta de calidad justifica el coste de infraestructura?
+
+
+================================================================================
+MODELOS DESCARTADOS Y RAZÓN
+================================================================================
+
+  Qwen3-Embedding-0.6B (candidato inicial)
+    → 404 Not Found en HuggingFace Inference API a fecha de experimentos.
+      Modelo en MTEB pero no desplegado en el servidor de inferencia.
+      Verificado con InferenceClient directo y LangChain.
+
+  Qwen3-Embedding-4B (candidato inicial)
+    → Mismo problema de disponibilidad. Borda #180 en MTEB.
+
+  jina-embeddings-v5-text-small (candidato inicial)
+    → Borda #23, buen ratio calidad/tamaño. Descartado al simplificar la
+      selección a 4 modelos con narrativa más limpia.
+
+  Octen-Embedding-8B (#1 MTEB)
+    → Sin paper, sin documentación, sin uso en producción conocido.
+      No citable en un TFG. Probable overfitting al benchmark.
+
+  MoD-Embedding (#10), BOOM_4B_v1 (#28), ICT-TIME (#21)
+    → Mismo problema: modelos sin respaldo académico ni documentación seria.
+
+  multilingual-e5-large-instruct (#45)
+    → Corpus en inglés. Ventaja multilingüe irrelevante. Contexto 512 tokens,
+      limitante para chunks estándar.
+
+  voyage-law-2 (Voyage AI)
+    → Especializado en legal, potencialmente relevante. Requiere key Voyage AI
+      separada. Queda como experimento opcional si el tiempo lo permite.
+
+  sentence-transformers/all-MiniLM-L6-v2
+    → Borda #71, 11M params, 256 tokens máx — trunca la mitad de cada chunk
+      de 512 tokens. Descartado a favor de bge-base-en-v1.5 (más serio).
+
+  nomic-embed-text-v1.5, intfloat/e5-base-v2, intfloat/e5-small-v2,
+  thenlper/gte-base
+    → No soportan task=feature-extraction en HF serverless (verificado).
+
+
+================================================================================
+ACCESO VIA HUGGINGFACE INFERENCE API
+================================================================================
+
+  Modelos #1, #2, #3 — provider: hf-inference (HF Serverless)
+  Modelo #4 — provider: scaleway (requiere parámetro provider='scaleway')
+
+  Todos accesibles con una sola HF token.
+  Permisos necesarios: "Make calls to Inference Providers" (únicamente).
+
+  Código base LangChain (modelos hf-inference):
+
+    from langchain_huggingface import HuggingFaceEndpointEmbeddings
+
+    embeddings = HuggingFaceEndpointEmbeddings(
+        model="Snowflake/snowflake-arctic-embed-l-v2.0",
+        huggingfacehub_api_token="hf_..."
+    )
+
+  Código Qwen3-8B (Scaleway):
+
+    from langchain_huggingface import HuggingFaceEndpointEmbeddings
+
+    embeddings = HuggingFaceEndpointEmbeddings(
+        model="Qwen/Qwen3-Embedding-8B",
+        provider="scaleway",
+        huggingfacehub_api_token="hf_..."
+    )
+
+  En Kedro: model_id y provider parametrizados desde parameters_expN.yml,
+  un run MLflow por experimento con embedding_model como parámetro logueado.
+
+================================================================================

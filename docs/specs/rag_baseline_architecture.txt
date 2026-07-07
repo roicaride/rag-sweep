@@ -1,0 +1,223 @@
+================================================================================
+  ARQUITECTURA BASE DE UN SISTEMA RAG — JUSTIFICACIÓN ACADÉMICA
+  TFG: Evaluación de modelos de embedding en RAG sobre corpus EUR-Lex
+================================================================================
+
+
+================================================================================
+1. ORIGEN Y DEFINICIÓN
+================================================================================
+
+Retrieval-Augmented Generation (RAG) fue formalizado por Lewis et al. (2020) en
+el paper "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
+(arXiv:2005.11401, NeurIPS 2020).
+
+La propuesta central: combinar memoria paramétrica (lo que el LLM sabe por
+entrenamiento) con memoria no-paramétrica (documentos externos recuperados en
+tiempo de inferencia). Esto permite al modelo responder con información
+actualizada sin necesidad de reentrenamiento.
+
+Cita formal:
+  Lewis, P., Perez, E., Piktus, A., Petroni, F., Karpukhin, V., et al. (2020).
+  Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks.
+  arXiv:2005.11401. NeurIPS 2020.
+
+
+================================================================================
+2. PIPELINE ESTÁNDAR ("Naive RAG")
+================================================================================
+
+La literatura distingue tres variantes: Naive RAG, Advanced RAG y Modular RAG
+(Gao et al., 2024, arXiv:2312.10997). El Naive RAG es el punto de partida
+universal y la configuración de este experimento.
+
+El pipeline se divide en dos fases:
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │  FASE OFFLINE — Indexación (una sola vez por corpus)        │
+  │                                                             │
+  │  Corpus → Chunking → Embedding → Vector Store              │
+  └─────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │  FASE ONLINE — Inferencia (por cada query)                  │
+  │                                                             │
+  │  Query → Embed query → Retrieval (top-k) → Prompt → LLM    │
+  └─────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.1  CHUNKING (segmentación de documentos)
+────────────────────────────────────────────────────────────────────────────────
+
+Los documentos se dividen en fragmentos manejables antes de ser indexados.
+
+Estrategia estándar: fixed-size chunking con solapamiento
+  - Tamaño de chunk: 256–1024 tokens/caracteres según la tarea
+  - Solapamiento (overlap): 10–20% del tamaño para preservar contexto en bordes
+  - Referencia de partida recomendada: chunk_size=256 tokens para Q&A factual,
+    chunk_size=512 tokens para razonamiento complejo
+    (LlamaIndex, 2023: "Evaluating the Ideal Chunk Size for a RAG System";
+     Milvus, 2024: "What is the optimal chunk size for RAG applications?")
+
+Fundamento: chunks pequeños mejoran la precisión del retrieval (menor ruido),
+chunks grandes preservan más contexto para el LLM generador. El tamaño óptimo
+depende del dominio y es objeto de experimentación (Fase 1 del TFG).
+
+Implementación en este TFG:
+  - Librería: LangChain RecursiveCharacterTextSplitter.from_huggingface_tokenizer()
+  - Tokenizador de referencia: BAAI/bge-base-en-v1.5 (BERT, compartido por la
+    mayoría de modelos evaluados — fijo para todos los experimentos)
+  - chunk_size=256 tokens BERT
+  - chunk_overlap=25 tokens (~10%)
+
+  Medición empírica sobre el corpus EUR-Lex completo (363 documentos):
+    · Total chunks generados: 22.627
+    · Tokens por chunk — media: 200 · mediana: 217 · máximo: 256
+    · Caracteres por chunk — media: 948 · mediana: 1.014
+    · Chunks > 256 tokens: 0 de 22.627 (0%)
+    · Ratio caracteres/token en texto legal EUR-Lex: 4.86 (vs ~3.5 inglés general,
+      por terminología jurídica y numeración de artículos)
+
+Fuente: arXiv:2406.00456 "Mix-of-Granularity: Optimize the Chunking Granularity
+        for Retrieval-Augmented Generation"
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.2  EMBEDDING (vectorización semántica)
+────────────────────────────────────────────────────────────────────────────────
+
+Cada chunk se convierte en un vector denso mediante un modelo de embedding.
+El vector captura el significado semántico del texto en un espacio métrico.
+
+Proceso:
+  - Los chunks se pasan al modelo de embedding → vector de dimensión d
+  - Los vectores se almacenan en un vector store (base de datos vectorial)
+  - El mismo modelo se usa para vectorizar las queries en tiempo de inferencia
+
+Paradigma dominante: dense retrieval mediante encoders basados en transformers
+(Karpukhin et al., 2020 — DPR, arXiv:2004.04906).
+
+En este TFG, la comparativa de modelos de embedding es el objeto central del
+experimento (Fase 2). Los modelos evaluados van de 86M a 7B parámetros.
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.3  VECTOR STORE (almacén de vectores)
+────────────────────────────────────────────────────────────────────────────────
+
+Los vectores de los chunks se indexan en una base de datos especializada que
+permite búsqueda aproximada de vecinos más cercanos (ANN).
+
+Implementación en este TFG:
+  - Vector store: Qdrant (modo local, persistido en disco)
+  - Índice: HNSW (Hierarchical Navigable Small World graphs)
+  - Capacidad: 60.766 chunks del corpus EUR-Lex copyright
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.4  RETRIEVAL (recuperación de contexto)
+────────────────────────────────────────────────────────────────────────────────
+
+En tiempo de inferencia, la query del usuario se vectoriza y se buscan los
+chunks más similares en el vector store.
+
+Métrica estándar: similitud coseno
+  - Mide el ángulo entre vectores, independiente de su magnitud
+  - Equivalente al producto escalar sobre vectores normalizados
+  - Preferida sobre distancia euclídea en espacios semánticos de alta dimensión
+
+Parámetro top-k: número de chunks recuperados para el LLM
+  - Rango habitual: k = 3 a 10
+  - Valor de referencia: k = 5 (usado en este TFG)
+  - Trade-off: k alto → más contexto pero mayor riesgo de ruido (distractor chunks)
+
+Implementación en este TFG:
+  - strategy: cosine, top_k: 5
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.5  GENERATION (respuesta aumentada)
+────────────────────────────────────────────────────────────────────────────────
+
+Los k chunks recuperados se insertan en el prompt del LLM como contexto.
+El LLM genera la respuesta final basándose únicamente en el contexto recuperado.
+
+Formato estándar del prompt:
+  "Responde la siguiente pregunta basándote en el contexto proporcionado.
+   Contexto: [chunk_1] ... [chunk_k]
+   Pregunta: [query]
+   Respuesta:"
+
+LLM en este TFG: DeepSeek-v4-flash (API), temperature=0, max_tokens=2048.
+
+
+================================================================================
+3. EVALUACIÓN — RAGAS
+================================================================================
+
+La evaluación del pipeline se realiza con el framework RAGAS.
+
+Referencia: Es, S., James, J., et al. (2023). "Ragas: Automated Evaluation of
+  Retrieval Augmented Generation". arXiv:2309.15217. EACL 2024.
+
+RAGAS define métricas que cubren las dos fases del pipeline:
+
+  RETRIEVAL (calidad del contexto recuperado)
+  ┌─────────────────────┬────────────────────────────────────────────────────┐
+  │ context_precision   │ ¿Qué fracción del contexto recuperado es relevante? │
+  │ context_recall      │ ¿Se recuperó todo el contexto necesario?            │
+  └─────────────────────┴────────────────────────────────────────────────────┘
+
+  GENERATION (calidad de la respuesta generada)
+  ┌─────────────────────┬────────────────────────────────────────────────────┐
+  │ faithfulness        │ ¿La respuesta se basa en el contexto recuperado?    │
+  │ answer_relevancy    │ ¿La respuesta responde la pregunta?                 │
+  └─────────────────────┴────────────────────────────────────────────────────┘
+
+Todas las métricas están en [0, 1]. Se usan LLMs como jueces (LLM-as-judge),
+lo que permite evaluación sin anotación humana masiva.
+
+En este TFG, el LLM juez es DeepSeek-v4-flash (temperature=0, max_tokens=4096).
+
+
+================================================================================
+4. CONFIGURACIÓN BASELINE DEL TFG (Exp 0)
+================================================================================
+
+La configuración Naive RAG de referencia es:
+
+  Corpus:      363 documentos EUR-Lex (derecho de autor europeo)
+  Chunking:    fixed_size · chunk_size=256 tokens BERT · overlap=25 tokens → 22.627 chunks
+  Embedding:   BAAI/bge-base-en-v1.5 (86M params, 768 dims, 512 tokens, MTEB #59)
+  Vector store: Qdrant local (HNSW, similitud coseno)
+  Retrieval:   top-k=5, cosine similarity
+  LLM:         DeepSeek-v4-flash (temperature=0)
+  Evaluación:  RAGAS (juez: DeepSeek-v4-flash) · 149 pares QA del gold dataset
+
+Esta configuración es reproducible con una sola HuggingFace API key y
+sin infraestructura GPU dedicada.
+
+
+================================================================================
+REFERENCIAS CLAVE
+================================================================================
+
+  [1] Lewis et al. (2020). Retrieval-Augmented Generation for Knowledge-Intensive
+      NLP Tasks. arXiv:2005.11401. NeurIPS 2020.
+      https://arxiv.org/abs/2005.11401
+
+  [2] Gao et al. (2024). Retrieval-Augmented Generation for Large Language
+      Models: A Survey. arXiv:2312.10997.
+
+  [3] Es et al. (2023). Ragas: Automated Evaluation of Retrieval Augmented
+      Generation. arXiv:2309.15217. EACL 2024.
+      https://arxiv.org/abs/2309.15217
+
+  [4] Karpukhin et al. (2020). Dense Passage Retrieval for Open-Domain
+      Question Answering. arXiv:2004.04906. EMNLP 2020.
+
+  [5] Weaviate (2023). Chunking Strategies to Improve LLM RAG Pipeline Performance.
+      https://weaviate.io/blog/chunking-strategies-for-rag
+
+================================================================================

@@ -1,0 +1,86 @@
+# ─── RAG eval — config compartida por todos os experimentos ──────────────────
+mlflow_experiment: "rag_eval_eurlex"
+
+# Qdrant en modo servidor (Docker). Moito máis rápido que o modo local con >20k puntos.
+# Levantar con: docker run -d --name qdrant -p 6333:6333 -v ./qdrant_storage:/qdrant/storage qdrant/qdrant
+qdrant_url: "http://localhost:6333"
+
+# Índice compartido que reutiliza exp3 (retrieval-only): a colección da config
+# gañadora arrastrada (chunking 256 + bge-m3). exp3 non re-indexa, só consulta.
+retrieval_index_collection: "exp1__bge_m3"
+
+ragas_run_config:
+  timeout: 180
+  max_retries: 3
+  max_workers: 16
+
+# Embedder xuíz de RAGAS (answer_relevancy). Fixo para todos os experimentos
+# (variable de control). Neutral: ningún candidato é Gemini. O mesmo que xerou o gold.
+ragas_embedding: "gemini-embedding-2"
+
+rag_prompt: |
+  You are a legal expert specialising in EU copyright law.
+  Answer the question using only the information in the context below.
+  If the context does not contain enough information, say so explicitly.
+
+  Context:
+  {context}
+
+  Question: {question}
+
+  Answer:
+
+# ─── Selección do subcorpus de copyright ──────────────────────────────────────
+corpus_selection:
+  keywords:
+    - "copyright"
+    - "related right"
+    - "neighbouring right"
+    - "computer program"
+    - "software"
+  forms_keep:
+    - "Judgment"
+    - "Opinion of the Advocate General"
+    - "Order"
+    - "Abstract"
+    - "Directive"
+    - "Consolidated text"
+    - "Decision"
+    - "Regulation"
+    - "Communication"
+    - "Impact assessment"
+    - "Green Paper"
+    - "Opinion"
+    - "Written question"
+    - "Proposal for a directive"
+    - "Proposal for a regulation"
+    - "Amended proposal for a directive"
+  min_words: 300
+
+# ─── Gold dataset ─────────────────────────────────────────────────────────────
+gold_dataset:
+  seed: 42
+  testset_size: 50
+  embedding_model: "gemini-embedding-2"
+  strata:
+    - min_words: 300
+      max_words: 1000
+      n: 10
+    - min_words: 1000
+      max_words: 5000
+      n: 25
+    - min_words: 5000
+      max_words: 20000
+      n: 25
+    - min_words: 20000
+      max_words: null
+      n: 15
+  llm:
+    model: "deepseek-v4-flash"
+    temperature: 0.0
+    max_tokens: 4096
+    base_url: "https://api.deepseek.com"
+  query_distribution:
+    single_hop_specific_query_synthesizer: 0.5
+    multi_hop_specific_query_synthesizer: 0.5
+  max_workers: 100

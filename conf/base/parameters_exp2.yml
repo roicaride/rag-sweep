@@ -1,0 +1,43 @@
+# exp2 — Chunking. Varía só o chunking (ceteris paribus).
+# embedding.model SEN fixar → resólvese ao gañador de exp1 (best_embedding).
+# retrieval = baseline cosine k=5. tokenizer de chunking = bge-m3. Referencia: 256 (=exp1__bge_m3).
+
+exp2__fixed_512:
+  experiment_id: "exp2__fixed_512"
+  chunking: {strategy: fixed_size, chunk_size: 512, chunk_overlap: 50, tokenizer_model: "BAAI/bge-m3"}
+  embedding: {batch_size: 32}
+  retrieval: {strategy: cosine, top_k: 5}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+exp2__sentence:
+  experiment_id: "exp2__sentence"
+  chunking: {strategy: sentence, chunk_size: 512, chunk_overlap: 50, tokenizer_model: "BAAI/bge-m3"}
+  embedding: {batch_size: 32}
+  retrieval: {strategy: cosine, top_k: 5}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+exp2__structural:
+  experiment_id: "exp2__structural"
+  chunking: {strategy: structural, chunk_size: 512, chunk_overlap: 50, parent_child: false, tokenizer_model: "BAAI/bge-m3"}
+  embedding: {batch_size: 32}
+  retrieval: {strategy: cosine, top_k: 5}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+exp2__structural_pc:
+  experiment_id: "exp2__structural_pc"
+  chunking: {strategy: structural, chunk_size: 512, chunk_overlap: 50, parent_child: true, parent_size: 1024, tokenizer_model: "BAAI/bge-m3"}
+  embedding: {batch_size: 32}
+  retrieval: {strategy: cosine, top_k: 5}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
+
+exp2__semantic:
+  experiment_id: "exp2__semantic"
+  chunking: {strategy: semantic, chunk_size: 512, chunk_overlap: 50, tokenizer_model: "BAAI/bge-m3", breakpoint_model: "sentence-transformers/all-MiniLM-L6-v2", breakpoint_type: "percentile"}
+  embedding: {batch_size: 32}
+  retrieval: {strategy: cosine, top_k: 5}
+  llm: {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
+  ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}

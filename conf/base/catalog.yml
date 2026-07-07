@@ -1,0 +1,293 @@
+# ─── 01_raw ───────────────────────────────────────────────────────────────────
+raw_corpus:
+  type: rag_eval.datasets.JSONLDataset
+  filepath: data/01_raw/eurlex-en-md.jsonl
+
+# ─── 02_intermediate ──────────────────────────────────────────────────────────
+corpus_clean:
+  type: rag_eval.datasets.JSONLDataset
+  filepath: data/02_intermediate/corpus_clean.jsonl
+
+corpus_copyright:
+  type: rag_eval.datasets.JSONLDataset
+  filepath: data/02_intermediate/corpus_copyright.jsonl
+
+# ─── 03_primary ───────────────────────────────────────────────────────────────
+gold_candidates:
+  type: kedro_datasets.pickle.PickleDataset
+  filepath: data/03_primary/gold_candidates.pkl
+
+knowledge_graph:
+  type: rag_eval.datasets.KnowledgeGraphDataset
+  filepath: data/03_primary/knowledge_graph.json
+
+gold_dataset:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/03_primary/gold_dataset.json
+
+# ─── exp0 — Baseline outputs ──────────────────────────────────────────────────
+exp0.vectorstore:
+  type: kedro_datasets.text.TextDataset
+  filepath: data/04_feature/exp0_baseline/qdrant_path.txt
+
+exp0.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp0/rag_results.json
+
+exp0.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp0/eval_metrics.json
+
+# ─── exp1 — Comparativa de embeddings ─────────────────────────────────────────
+exp1__snowflake_arctic_l.vectorstore:
+  type: kedro_datasets.text.TextDataset
+  filepath: data/04_feature/exp1__snowflake_arctic_l/qdrant_path.txt
+
+exp1__snowflake_arctic_l.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp1__snowflake_arctic_l/rag_results.json
+
+exp1__snowflake_arctic_l.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp1__snowflake_arctic_l/eval_metrics.json
+
+exp1__bge_m3.vectorstore:
+  type: kedro_datasets.text.TextDataset
+  filepath: data/04_feature/exp1__bge_m3/qdrant_path.txt
+
+exp1__bge_m3.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp1__bge_m3/rag_results.json
+
+exp1__bge_m3.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp1__bge_m3/eval_metrics.json
+
+exp1__qwen3_8b.vectorstore:
+  type: kedro_datasets.text.TextDataset
+  filepath: data/04_feature/exp1__qwen3_8b/qdrant_path.txt
+
+exp1__qwen3_8b.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp1__qwen3_8b/rag_results.json
+
+exp1__qwen3_8b.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp1__qwen3_8b/eval_metrics.json
+
+# ─── Selección de gañador (arrastre a exp2+) ──────────────────────────────────
+best_embedding:
+  type: kedro_datasets.text.TextDataset
+  filepath: data/08_reporting/best_embedding.txt
+
+best_chunking:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/best_chunking.json
+
+best_retrieval:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/best_retrieval.json
+
+best_rerank:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/best_rerank.json
+
+best_query_transform:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/best_query_transform.json
+
+# Params resoltos (carry) persistidos → permite retomar o eval tras un corte de cota
+"{experiment}.params":
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/04_feature/{experiment}/params.json
+
+# ─── exp2 — Chunking ──────────────────────────────────────────────────────────
+exp2__fixed_512.vectorstore:
+  type: kedro_datasets.text.TextDataset
+  filepath: data/04_feature/exp2__fixed_512/qdrant_path.txt
+exp2__fixed_512.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp2__fixed_512/rag_results.json
+exp2__fixed_512.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp2__fixed_512/eval_metrics.json
+
+exp2__sentence.vectorstore:
+  type: kedro_datasets.text.TextDataset
+  filepath: data/04_feature/exp2__sentence/qdrant_path.txt
+exp2__sentence.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp2__sentence/rag_results.json
+exp2__sentence.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp2__sentence/eval_metrics.json
+
+exp2__structural.vectorstore:
+  type: kedro_datasets.text.TextDataset
+  filepath: data/04_feature/exp2__structural/qdrant_path.txt
+exp2__structural.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp2__structural/rag_results.json
+exp2__structural.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp2__structural/eval_metrics.json
+
+exp2__structural_pc.vectorstore:
+  type: kedro_datasets.text.TextDataset
+  filepath: data/04_feature/exp2__structural_pc/qdrant_path.txt
+exp2__structural_pc.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp2__structural_pc/rag_results.json
+exp2__structural_pc.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp2__structural_pc/eval_metrics.json
+
+exp2__semantic.vectorstore:
+  type: kedro_datasets.text.TextDataset
+  filepath: data/04_feature/exp2__semantic/qdrant_path.txt
+exp2__semantic.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp2__semantic/rag_results.json
+exp2__semantic.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp2__semantic/eval_metrics.json
+
+# ─── exp3 — Retrieval (reutiliza índice, sen vectorstore propio) ───────────────
+exp3__dense_k10.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp3__dense_k10/rag_results.json
+exp3__dense_k10.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp3__dense_k10/eval_metrics.json
+
+exp3__mmr_k5.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp3__mmr_k5/rag_results.json
+exp3__mmr_k5.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp3__mmr_k5/eval_metrics.json
+
+exp3__mmr_k10.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp3__mmr_k10/rag_results.json
+exp3__mmr_k10.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp3__mmr_k10/eval_metrics.json
+
+exp3__bm25_k5.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp3__bm25_k5/rag_results.json
+exp3__bm25_k5.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp3__bm25_k5/eval_metrics.json
+
+exp3__bm25_k10.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp3__bm25_k10/rag_results.json
+exp3__bm25_k10.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp3__bm25_k10/eval_metrics.json
+
+exp3__hybrid_k5.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp3__hybrid_k5/rag_results.json
+exp3__hybrid_k5.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp3__hybrid_k5/eval_metrics.json
+
+exp3__hybrid_k10.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp3__hybrid_k10/rag_results.json
+exp3__hybrid_k10.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp3__hybrid_k10/eval_metrics.json
+
+# ─── exp4a–4g — Query expansion (reutiliza índice) ────────────────────────────
+exp4a__hyde.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp4a__hyde/rag_results.json
+exp4a__hyde.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp4a__hyde/eval_metrics.json
+
+exp4b__multiquery.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp4b__multiquery/rag_results.json
+exp4b__multiquery.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp4b__multiquery/eval_metrics.json
+
+exp4c__rag_fusion.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp4c__rag_fusion/rag_results.json
+exp4c__rag_fusion.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp4c__rag_fusion/eval_metrics.json
+
+exp4d__rewrite.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp4d__rewrite/rag_results.json
+exp4d__rewrite.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp4d__rewrite/eval_metrics.json
+
+exp4e__stepback.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp4e__stepback/rag_results.json
+exp4e__stepback.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp4e__stepback/eval_metrics.json
+
+exp4f__decomposition.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp4f__decomposition/rag_results.json
+exp4f__decomposition.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp4f__decomposition/eval_metrics.json
+
+exp4g__selfquery.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp4g__selfquery/rag_results.json
+exp4g__selfquery.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp4g__selfquery/eval_metrics.json
+
+# ─── exp5a–5d — Reranking (reutiliza índice) ──────────────────────────────────
+exp5a__rerank_ce_k5.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp5a__rerank_ce_k5/rag_results.json
+exp5a__rerank_ce_k5.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp5a__rerank_ce_k5/eval_metrics.json
+
+exp5b__rerank_ce_k10.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp5b__rerank_ce_k10/rag_results.json
+exp5b__rerank_ce_k10.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp5b__rerank_ce_k10/eval_metrics.json
+
+exp5c__rerank_llm_k5.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp5c__rerank_llm_k5/rag_results.json
+exp5c__rerank_llm_k5.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp5c__rerank_llm_k5/eval_metrics.json
+
+exp5d__rerank_llm_k10.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/exp5d__rerank_llm_k10/rag_results.json
+exp5d__rerank_llm_k10.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/exp5d__rerank_llm_k10/eval_metrics.json
+
+# ─── expSOTA — Stack SOTA maximalista (qwen3+semantic+hybrid+rag_fusion+LLM rerank) ──
+expSOTA.vectorstore:
+  type: kedro_datasets.text.TextDataset
+  filepath: data/04_feature/expSOTA/qdrant_path.txt
+expSOTA.rag_results:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/07_model_output/expSOTA/rag_results.json
+expSOTA.eval_metrics:
+  type: kedro_datasets.json.JSONDataset
+  filepath: data/08_reporting/expSOTA/eval_metrics.json
