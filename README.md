@@ -1,207 +1,206 @@
-# Optimización experimental de sistemas RAG
+# rag-sweep
 
-**Un marco reproducible para encontrar la configuración RAG óptima de un dominio concreto — y su aplicación a un corpus jurídico europeo.**
+**A reproducible framework for finding the RAG configuration that actually works on *your* corpus — and its application to a European legal domain.**
 
-Trabajo de Fin de Grao · Grao en Empresa e Tecnoloxía · Universidade de Santiago de Compostela
-Autor: Roi Caride Borrajo · Memoria en galego · 2026
-
----
-
-## Qué es esto
-
-No existe una configuración RAG universalmente óptima. Lo que funciona en un corpus de
-documentación técnica no tiene por qué funcionar en uno jurídico, médico o financiero, y la
-única forma honesta de saberlo es **medirlo sobre el corpus propio**.
-
-Este repositorio contiene **la herramienta que hace esa medición sistemática y repetible**: un
-pipeline de ablación secuencial construido sobre Kedro que compara variantes de embedding,
-chunking, retrieval, expansión de consulta y reranking, evalúa cada una con las mismas métricas
-sobre el mismo conjunto de preguntas, y **encadena automáticamente el ganador de cada fase como
-punto de partida de la siguiente**.
-
-> **Los resultados que verás aquí son un caso de aplicación, no el producto.**
-> Se ejecutó sobre un corpus de derecho de autor de EUR-Lex porque había que ejecutarlo sobre
-> algo. Los números concretos (que `bge-m3` gane, que MMR con k=10 gane, que ninguna técnica de
-> expansión de consulta ayude) **son propios de ese corpus y no deben extrapolarse**. Lo que sí
-> es transferible es el procedimiento: cambia el corpus y los ficheros de parámetros, vuelve a
-> ejecutar, y obtendrás la configuración óptima *de tu dominio* con la misma evidencia detrás.
+Bachelor's thesis · Business & Technology · Universidade de Santiago de Compostela
+Roi Caride Borrajo · Thesis written in Galician · 2026
 
 ---
 
-## La evidencia de que la herramienta hace falta
+## What this is
 
-El experimento más relevante del trabajo no es cuál fue la mejor configuración, sino esta
-comparación:
+There is no universally optimal RAG configuration. What works on a corpus of technical
+documentation has no reason to work on a legal, medical or financial one, and the only honest
+way to find out is **to measure it on your own corpus**.
 
-| Configuración | P+R |
+This repository contains **the tool that makes that measurement systematic and repeatable**: a
+sequential ablation pipeline built on Kedro that compares embedding, chunking, retrieval, query
+expansion and reranking variants, evaluates each one against the same metrics on the same set
+of questions, and **automatically carries the winner of each stage forward as the starting
+point of the next**.
+
+> **The results you will find here are a case study, not the product.**
+> The sweep ran on a corpus of EU copyright law because it had to run on something. The
+> specific findings — that `bge-m3` wins, that MMR with k=10 wins, that no query expansion
+> technique helps — **belong to that corpus and should not be extrapolated**. What transfers is
+> the procedure: swap the corpus and the parameter files, run it again, and you get the optimal
+> configuration *for your domain* with the same evidence behind it.
+
+---
+
+## Why the tool is needed
+
+The most telling experiment in this work is not which configuration won, but this comparison:
+
+| Configuration | P+R |
 |---|---|
-| RAG naive (baseline) | 0,756 |
-| **Stack «SOTA» montado desde la literatura** | **1,095** |
-| **Configuración hallada empíricamente en este corpus** | **1,203** |
+| Naive RAG (baseline) | 0.756 |
+| **"SOTA" stack assembled from the literature** | **1.095** |
+| **Configuration found empirically on this corpus** | **1.203** |
 
-Un stack construido apilando las técnicas que los papers reportan como estado del arte
-(chunking semántico + embedding de 8B parámetros + retrieval híbrido + RAG-Fusion + reranking
-por LLM) **rinde un 9 % peor** que la configuración encontrada midiendo sobre el corpus real, y
-además es mucho más caro de ejecutar.
+A stack built by piling up the techniques that papers report as state of the art (semantic
+chunking + an 8B-parameter embedding model + hybrid retrieval + RAG-Fusion + LLM reranking)
+**performs 9% worse** than the configuration found by measuring on the actual corpus — and it
+is considerably more expensive to run.
 
-Esa brecha es el argumento del proyecto: seguir las recomendaciones genéricas de la literatura
-no equivale a optimizar. Hace falta un método, y el método hay que instrumentarlo.
+That gap is the argument of this project: following generic recommendations from the
+literature is not the same as optimizing. You need a method, and the method needs
+instrumentation.
 
 ---
 
-## Cómo funciona
+## How it works
 
-**Ablación secuencial con arrastre de ganadores.** Cada fase varía un único componente y deja
-todo lo demás fijo. Al terminar, un nodo de selección elige el ganador por la métrica de
-decisión y lo inyecta como configuración base de la fase siguiente.
+**Sequential ablation with winner carry-over.** Each stage varies a single component and holds
+everything else fixed. When it finishes, a selection node picks the winner by the decision
+metric and injects it as the base configuration for the next stage.
 
 ```
-exp0  baseline           →  fixed 256 · bge-base-en-v1.5 · coseno k=5
+exp0  baseline          →  fixed 256 · bge-base-en-v1.5 · cosine k=5
   ↓  select_best_embedding
-exp1  embeddings         →  bge-m3 vs qwen3-8b vs snowflake-arctic-l
+exp1  embeddings        →  bge-m3 vs qwen3-8b vs snowflake-arctic-l
   ↓  select_best_chunking
-exp2  chunking           →  fixed 512 · sentence · structural · structural+parent-child · semantic
+exp2  chunking          →  fixed 512 · sentence · structural · structural+parent-child · semantic
   ↓  select_best_retrieval
-exp3  retrieval          →  denso k3/k10 · MMR k5/k10 · BM25 k5/k10 · híbrido k5/k10
+exp3  retrieval         →  dense k3/k10 · MMR k5/k10 · BM25 k5/k10 · hybrid k5/k10
   ↓  select_best_query_transform
-exp4  expansión consulta →  HyDE · Multi-Query · RAG-Fusion · Rewrite · Step-Back · Decomposition · Self-Query
+exp4  query expansion   →  HyDE · Multi-Query · RAG-Fusion · Rewrite · Step-Back · Decomposition · Self-Query
   ↓  select_best_rerank
-exp5  reranking          →  cross-encoder k5/k10 · LLM-as-reranker k5/k10
+exp5  reranking         →  cross-encoder k5/k10 · LLM-as-reranker k5/k10
 
-expSOTA  control: stack maximalista de la literatura, ejecutado aparte para contrastar
+expSOTA  control: maximalist stack from the literature, run separately for contrast
 ```
 
-El arrastre está implementado en [`pipeline_registry.py`](rag-eval/src/rag_eval/pipeline_registry.py):
-los nodos `select_best_*` leen las métricas de todas las variantes de una fase y producen un
-dataset (`best_embedding`, `best_chunking`, …) que las fases posteriores reciben como entrada.
-Añadir una variante nueva es **añadir un bloque a un YAML**, no tocar código.
+The carry-over lives in [`pipeline_registry.py`](rag-eval/src/rag_eval/pipeline_registry.py):
+the `select_best_*` nodes read the metrics of every variant in a stage and produce a dataset
+(`best_embedding`, `best_chunking`, …) that later stages receive as input. Adding a new variant
+means **adding a block to a YAML file**, not touching code.
 
-Las fases 3, 4 y 5 reutilizan el índice vectorial de la fase 2 en lugar de reindexar, lo que
-reduce el coste de una barrida completa de horas a minutos.
+Stages 3, 4 and 5 reuse the vector index built in stage 2 instead of re-indexing, which cuts
+the cost of a full sweep from hours to minutes.
 
-**Limitación conocida y asumida:** una optimización greedy por fases no garantiza el óptimo
-global — que A₁ gane en el primer paso no implica que la combinación A₁+B₁ supere a A₂+B₂. Es
-una búsqueda secuencial de hiperparámetros, elegida porque una búsqueda exhaustiva sobre el
-espacio completo era inviable con el presupuesto del trabajo.
+**A known and accepted limitation:** greedy stage-by-stage optimization does not guarantee a
+global optimum — A₁ winning the first stage does not imply that A₁+B₁ beats A₂+B₂. This is a
+sequential hyperparameter search, chosen because an exhaustive search over the full
+combinatorial space was not feasible within the budget of this work.
 
 ---
 
-## Métricas
+## Metrics
 
-Seis métricas de RAGAS, con un LLM juez fijo (`gemini-2.5-flash`) e independiente del LLM
-generador (`deepseek-v4-flash`) para evitar sesgo de autoevaluación:
+Six RAGAS metrics, with a fixed judge LLM (`gemini-2.5-flash`) kept independent from the
+generator LLM (`deepseek-v4-flash`) to avoid self-evaluation bias:
 
-| Métrica | Qué mide | Etapa |
+| Metric | What it measures | Stage |
 |---|---|---|
-| `context_recall` | ¿Se recuperó todo lo necesario para responder? | Recuperación |
-| `context_precision` | ¿Lo recuperado es relevante y está bien ordenado? | Recuperación |
-| `context_entity_recall` | Cobertura de las entidades clave de la respuesta ideal | Recuperación |
-| `faithfulness` | ¿La respuesta se sostiene en el contexto recuperado? | Generación |
-| `answer_relevancy` | ¿La respuesta responde a la pregunta formulada? | Generación |
-| `noise_sensitivity` | ¿Introduce errores cuando hay contexto irrelevante? | Robustez |
+| `context_recall` | Was everything needed to answer actually retrieved? | Retrieval |
+| `context_precision` | Is what was retrieved relevant, and well ranked? | Retrieval |
+| `context_entity_recall` | Coverage of the key entities of the ideal answer | Retrieval |
+| `faithfulness` | Is the answer grounded in the retrieved context? | Generation |
+| `answer_relevancy` | Does the answer address the question asked? | Generation |
+| `noise_sensitivity` | Does it introduce errors when given irrelevant context? | Robustness |
 
-**Métrica de decisión: `P+R` = `context_precision` + `context_recall`.** Se optimiza la etapa de
-recuperación porque es la que el pipeline controla; la calidad de generación se vigila como
-efecto secundario, no como objetivo.
+**Decision metric: `P+R` = `context_precision` + `context_recall`.** Retrieval is what the
+pipeline directly controls, so that is what gets optimized; generation quality is monitored as
+a side effect, not as the objective.
 
 ---
 
-## Estructura del repositorio
+## Repository layout
 
 ```
 .
-├── rag-eval/            Pipeline Kedro — el núcleo reutilizable
-│   ├── conf/base/       parameters_exp*.yml → una barrida = un fichero de configuración
-│   ├── src/rag_eval/    5 pipelines + módulos de chunking, embedding, retrieval, reranking
-│   ├── notebooks/       exploración del corpus, construcción del gold set, análisis final
-│   └── info/            notebooks precursores (prototipo previo al pipeline)
-├── resultados/          Caso de ejemplo EUR-Lex: 22 figuras + 10 tablas CSV
-├── memoria/             Memoria del TFG: fuente LaTeX, bibliografía, figuras y PDF final
+├── rag-eval/            Kedro pipeline — the reusable core
+│   ├── conf/base/       parameters_exp*.yml → one sweep = one config file
+│   ├── src/rag_eval/    5 pipelines + chunking, embedding, retrieval, reranking modules
+│   ├── notebooks/       corpus exploration, gold set construction, final analysis
+│   └── info/            precursor notebooks (prototype that predates the pipeline)
+├── results/             EUR-Lex case study: 22 figures + 10 CSV tables
+├── thesis/              LaTeX source, bibliography, figures and final PDF
 └── docs/
-    ├── deseno-experimental.md      Diseño ejecutado, fase a fase
-    ├── dataset-de-avaliacion.md    Construcción del conjunto de evaluación
-    └── specs/                      Decisiones técnicas documentadas durante el desarrollo
+    ├── experimental-design.md   The executed design, stage by stage
+    ├── evaluation-dataset.md    How the evaluation set was built
+    └── specs/                   Technical decisions recorded during development
 ```
 
-Lo que **no** está en el repositorio, por peso y por ser regenerable: el corpus bruto
-(3,1 GB), el corpus limpio (2,1 GB), los índices Qdrant (5,8 GB) y la base de MLflow. El
-pipeline los reconstruye desde la fuente pública.
+Not in the repository, because it is heavy and regenerable: the raw corpus (3.1 GB), the
+cleaned corpus (2.1 GB), the Qdrant indexes (5.8 GB) and the MLflow store. The pipeline
+rebuilds all of it from the public source.
 
 ---
 
-## El caso de aplicación: EUR-Lex
+## The case study: EUR-Lex
 
 | | |
 |---|---|
-| Corpus fuente | `gplsi/alia_intellectual_property` (EUR-Lex, propiedad intelectual, CC BY 4.0) — 40.181 documentos |
-| Subcorpus de trabajo | 363 documentos de derecho de autor, filtrados por palabra clave en el título, tipo de acto jurídico y mínimo de 300 palabras |
-| Conjunto de evaluación | 50 pares pregunta–respuesta generados con RAGAS (26 single-hop, 24 multi-hop), muestreo estratificado por longitud, `seed=42` |
-| Configuraciones evaluadas | 29 ejecuciones completas a lo largo de 6 fases |
-| Vector store | Qdrant en modo servidor |
-| Orquestación / tracking | Kedro 1.3.1 · MLflow |
+| Source corpus | `gplsi/alia_intellectual_property` (EUR-Lex, intellectual property, CC BY 4.0) — 40,181 documents |
+| Working subcorpus | 363 copyright documents, filtered by title keyword, legal act type and a 300-word minimum |
+| Evaluation set | 50 question–answer pairs generated with RAGAS (26 single-hop, 24 multi-hop), stratified sampling by length, `seed=42` |
+| Configurations evaluated | 29 full runs across 6 stages |
+| Vector store | Qdrant in server mode |
+| Orchestration / tracking | Kedro 1.3.1 · MLflow |
 
-### Progresión del pipeline
+### Pipeline progression
 
-| Fase | Decisión | P+R | Δ |
+| Stage | Decision | P+R | Δ |
 |---|---|---|---|
-| Baseline | fixed 256 · bge-base-en-v1.5 · coseno k=5 | 0,756 | — |
-| + Embedding | **bge-m3** | 0,999 | +0,242 |
-| + Chunking | fixed 256 *(gana el baseline)* | 0,999 | 0,000 |
-| + Retrieval | **MMR k=10** | 1,094 | +0,095 |
-| + Expansión | **ninguna** *(las 7 técnicas empeoran)* | 1,094 | 0,000 |
-| + Reranking | **cross-encoder `bge-reranker-v2-m3` k=10** | **1,203** | +0,109 |
+| Baseline | fixed 256 · bge-base-en-v1.5 · cosine k=5 | 0.756 | — |
+| + Embedding | **bge-m3** | 0.999 | +0.242 |
+| + Chunking | fixed 256 *(the baseline wins)* | 0.999 | 0.000 |
+| + Retrieval | **MMR k=10** | 1.094 | +0.095 |
+| + Query expansion | **none** *(all 7 techniques hurt)* | 1.094 | 0.000 |
+| + Reranking | **cross-encoder `bge-reranker-v2-m3` k=10** | **1.203** | +0.109 |
 
-**+59 % sobre el baseline.** Dos de las cinco fases no aportaron nada: el chunking del baseline
-resultó ser ya el mejor, y **las siete técnicas de expansión de consulta empeoraron el
-resultado sin excepción** — un hallazgo negativo que probablemente se explica por lo específico
-del vocabulario jurídico, donde reescribir la consulta la aleja de la terminología literal del
-corpus.
+**+59% over the baseline.** Two of the five stages contributed nothing: the baseline chunking
+turned out to be the best available, and **all seven query expansion techniques made results
+worse without exception** — a negative finding most likely explained by how specific legal
+vocabulary is, where rewriting the query moves it away from the corpus's literal terminology.
 
-Todas las cifras salen de [`resultados/tablas/`](resultados/tablas/) y son las mismas que se
-reportan en la memoria.
-
----
-
-## Reutilizarlo en otro dominio
-
-1. Sustituye el corpus en `rag-eval/data/01_raw/` y ajusta el bloque `corpus_selection` de
-   `conf/base/parameters.yml` con los filtros de tu dominio.
-2. Genera el conjunto de evaluación: `kedro run --pipeline gold_dataset`.
-3. Lanza el baseline y las fases que te interesen. Las variantes se declaran en
-   `conf/base/parameters_exp*.yml`; para probar un embedding nuevo basta con copiar un bloque y
-   cambiar el nombre del modelo.
-4. `notebooks/03_results.ipynb` regenera todas las figuras y tablas comparativas.
-
-No hace falta tocar código Python salvo que quieras añadir una **estrategia** que no exista
-(un tipo de chunking nuevo, por ejemplo); en ese caso el punto de extensión es el módulo
-correspondiente en `src/rag_eval/`.
-
-Instrucciones detalladas de instalación y ejecución: [`rag-eval/README.md`](rag-eval/README.md).
+Every figure comes from [`results/tables/`](results/tables/) and matches what the thesis
+reports.
 
 ---
 
-## Alcance y honestidad
+## Using it on another domain
 
-Esto es un **activo experimental reutilizable**, no un producto desplegado. Concretamente:
+1. Replace the corpus in `rag-eval/data/01_raw/` and adjust the `corpus_selection` block of
+   `conf/base/parameters.yml` with the filters for your domain.
+2. Generate the evaluation set: `kedro run --pipeline gold_dataset`.
+3. Run the baseline and whichever stages interest you. Variants are declared in
+   `conf/base/parameters_exp*.yml`; testing a new embedding model is a matter of copying a
+   block and changing the model name.
+4. `notebooks/03_results.ipynb` regenerates every comparative figure and table.
 
-- **No hay servicio, API ni interfaz de usuario.** El pipeline produce evidencia, no un sistema
-  en producción.
-- **No hay medición de latencia ni de coste en producción.** Se descartaron del alcance.
-- **No se evaluaron arquitecturas alternativas** (CRAG, Adaptive-RAG, RAG agéntico, GraphRAG).
-  Estaban en el plan inicial y quedaron en trabajo futuro.
-- **Los resultados valen para este corpus.** Ese es, precisamente, el argumento del trabajo.
+No Python changes are needed unless you want to add a **strategy** that does not exist yet (a
+new chunking method, for instance); in that case the extension point is the corresponding
+module in `src/rag_eval/`.
+
+Full installation and execution instructions: [`rag-eval/README.md`](rag-eval/README.md).
 
 ---
 
-## Memoria
+## Scope and honesty
 
-[`memoria/TFG_RAG_Roi_Caride.pdf`](memoria/TFG_RAG_Roi_Caride.pdf) — 48 páginas, en galego.
-Fuente LaTeX incluida (`TFG_RAG.tex` + `referencias.bib`); compilar con
+This is a **reusable experimental asset**, not a deployed product. Specifically:
+
+- **There is no service, API or user interface.** The pipeline produces evidence, not a
+  production system.
+- **Latency and production cost were not measured.** They were left out of scope.
+- **Alternative architectures were not evaluated** (CRAG, Adaptive-RAG, agentic RAG,
+  GraphRAG). They were in the original plan and remain future work.
+- **The results hold for this corpus.** That is precisely the point of the work.
+
+---
+
+## Thesis
+
+[`thesis/TFG_RAG_Roi_Caride.pdf`](thesis/TFG_RAG_Roi_Caride.pdf) — 48 pages, written in
+Galician. LaTeX source included (`TFG_RAG.tex` + `referencias.bib`); build with
 `pdflatex → biber → pdflatex → pdflatex`.
 
-## Créditos
+## Credits
 
-Corpus derivado de [`gplsi/alia_intellectual_property`](https://huggingface.co/datasets/gplsi/alia_intellectual_property)
-(Espinosa Zaragoza et al., 2025), CC BY 4.0. Construido con
-[Kedro](https://kedro.org), [LangChain](https://www.langchain.com),
-[RAGAS](https://docs.ragas.io), [Qdrant](https://qdrant.tech) y [MLflow](https://mlflow.org).
+Corpus derived from [`gplsi/alia_intellectual_property`](https://huggingface.co/datasets/gplsi/alia_intellectual_property)
+(Espinosa Zaragoza et al., 2025), CC BY 4.0. Built with [Kedro](https://kedro.org),
+[LangChain](https://www.langchain.com), [RAGAS](https://docs.ragas.io),
+[Qdrant](https://qdrant.tech) and [MLflow](https://mlflow.org).

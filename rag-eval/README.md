@@ -1,142 +1,142 @@
-# rag-eval — pipeline de evaluación y optimización de RAG
+# rag-eval — RAG evaluation and optimization pipeline
 
-Proyecto [Kedro](https://kedro.org) que orquesta toda la experimentación: desde la ingesta del
-corpus bruto hasta las tablas comparativas finales. Es el núcleo reutilizable del trabajo; el
-contexto y los resultados están en el [README raíz](../README.md).
+A [Kedro](https://kedro.org) project that orchestrates the whole experiment: from ingesting the
+raw corpus to the final comparison tables. This is the reusable core of the work; context and
+results live in the [root README](../README.md).
 
-## Requisitos
+## Requirements
 
 - Python ≥ 3.10
-- Docker (para Qdrant en modo servidor)
-- Claves de API para el LLM generador y el LLM juez
+- Docker (for Qdrant in server mode)
+- API keys for the generator LLM and the judge LLM
 
 ```bash
 pip install -r requirements.txt
 docker run -d --name qdrant -p 6333:6333 -v ./qdrant_storage:/qdrant/storage qdrant/qdrant
 ```
 
-Las credenciales van en `conf/local/credentials.yml`, que **está excluido del control de
-versiones**. Estructura esperada:
+Credentials go in `conf/local/credentials.yml`, which is **excluded from version control**.
+Expected structure:
 
 ```yaml
 deepseek:
-  api_key: "..."      # LLM generador
+  api_key: "..."      # generator LLM
 google:
-  api_key: "..."      # LLM juez de RAGAS (gemini-2.5-flash) y embedder juez
+  api_key: "..."      # RAGAS judge LLM (gemini-2.5-flash) and judge embedder
 ```
 
 ## Pipelines
 
-| Pipeline | Qué hace | Entrada → salida |
+| Pipeline | What it does | Input → output |
 |---|---|---|
-| `ingestion` | Normaliza y limpia el volcado bruto de EUR-Lex | `raw_corpus` → `corpus_clean` |
-| `corpus_selection` | Filtra el subcorpus de trabajo (palabra clave + tipo de acto + mínimo de palabras) | `corpus_clean` → `corpus_copyright` |
-| `gold_dataset` | Muestreo estratificado + generación de pares QA con RAGAS | `corpus_copyright` → `gold_dataset` |
-| `rag_base` | Chunking → indexado → recuperación → generación | `corpus_copyright` → `<exp>.rag_results` |
-| `evaluation` | Calcula las 6 métricas RAGAS y las registra en MLflow | `<exp>.rag_results` → `<exp>.eval_metrics` |
+| `ingestion` | Normalizes and cleans the raw EUR-Lex dump | `raw_corpus` → `corpus_clean` |
+| `corpus_selection` | Filters the working subcorpus (keyword + legal act type + minimum length) | `corpus_clean` → `corpus_copyright` |
+| `gold_dataset` | Stratified sampling + QA pair generation with RAGAS | `corpus_copyright` → `gold_dataset` |
+| `rag_base` | Chunking → indexing → retrieval → generation | `corpus_copyright` → `<exp>.rag_results` |
+| `evaluation` | Computes the 6 RAGAS metrics and logs them to MLflow | `<exp>.rag_results` → `<exp>.eval_metrics` |
 
-Los pipelines `rag_base` y `evaluation` están parametrizados: se instancian una vez por cada
-variante experimental declarada en `conf/base/parameters_exp*.yml`.
+`rag_base` and `evaluation` are parameterized: they are instantiated once per experimental
+variant declared in `conf/base/parameters_exp*.yml`.
 
-## Ejecución
+## Running it
 
-Preparación del corpus y del conjunto de evaluación (una sola vez):
+Corpus and evaluation set preparation (once):
 
 ```bash
 kedro run                              # ingestion + corpus_selection + gold_dataset
 ```
 
-Barrida experimental, fase a fase. Tras cada fase se ejecuta el nodo de selección que fija el
-ganador para las fases siguientes:
+The experimental sweep, stage by stage. After each stage, the selection node fixes the winner
+for everything downstream:
 
 ```bash
 kedro run --pipeline exp0                          # baseline
 
-kedro run --pipeline exp1__bge_m3                  # fase 1: embeddings
+kedro run --pipeline exp1__bge_m3                  # stage 1: embeddings
 kedro run --pipeline exp1__qwen3_8b
 kedro run --pipeline exp1__snowflake_arctic_l
 kedro run --pipeline select_best_embedding
 
-kedro run --pipeline exp2__fixed_512               # fase 2: chunking
-# … resto de variantes exp2 …
+kedro run --pipeline exp2__fixed_512               # stage 2: chunking
+# … remaining exp2 variants …
 kedro run --pipeline select_best_chunking
 
-kedro run --pipeline exp3__mmr_k10                 # fase 3: retrieval
-# … resto de variantes exp3 …
+kedro run --pipeline exp3__mmr_k10                 # stage 3: retrieval
+# … remaining exp3 variants …
 kedro run --pipeline select_best_retrieval
 
-kedro run --pipeline exp4a__hyde                   # fase 4: expansión de consulta
-# … resto de variantes exp4 …
+kedro run --pipeline exp4a__hyde                   # stage 4: query expansion
+# … remaining exp4 variants …
 kedro run --pipeline select_best_query_transform
 
-kedro run --pipeline exp5b__rerank_ce_k10          # fase 5: reranking
-# … resto de variantes exp5 …
+kedro run --pipeline exp5b__rerank_ce_k10          # stage 5: reranking
+# … remaining exp5 variants …
 kedro run --pipeline select_best_rerank
 
-kedro run --pipeline expSOTA                       # control: stack de la literatura
+kedro run --pipeline expSOTA                       # control: stack from the literature
 ```
 
-Lista completa de pipelines disponibles: `kedro registry list`.
-Grafo interactivo del flujo: `kedro viz`.
-Métricas de todas las ejecuciones: `mlflow ui --backend-store-uri sqlite:///mlflow.db`.
+Full list of available pipelines: `kedro registry list`.
+Interactive flow graph: `kedro viz`.
+Metrics across all runs: `mlflow ui --backend-store-uri sqlite:///mlflow.db`.
 
-## Añadir una variante experimental
+## Adding an experimental variant
 
-Casi siempre basta con **un bloque YAML**. Para probar un embedding nuevo en la fase 1:
+Usually **one YAML block** is enough. To test a new embedding model in stage 1:
 
 ```yaml
 # conf/base/parameters_exp1.yml
-exp1__mi_modelo:
-  experiment_id: "exp1__mi_modelo"
+exp1__my_model:
+  experiment_id: "exp1__my_model"
   chunking:  {strategy: fixed_size, chunk_size: 256, chunk_overlap: 25, tokenizer_model: "BAAI/bge-base-en-v1.5"}
-  embedding: {model: "org/mi-modelo", batch_size: 32}
+  embedding: {model: "org/my-model", batch_size: 32}
   retrieval: {strategy: cosine, top_k: 5}
   llm:       {model: "deepseek-v4-flash", temperature: 0.0, max_tokens: 2048, base_url: "https://api.deepseek.com"}
   ragas_llm: {model: "gemini-2.5-flash", temperature: 0.0, max_tokens: 4096, thinking_budget: 0}
 ```
 
-Después hay que registrar la variante en `pipeline_registry.py` (una línea) y declarar sus tres
-datasets en `conf/base/catalog.yml`.
+Then register the variant in `pipeline_registry.py` (one line) and declare its three datasets
+in `conf/base/catalog.yml`.
 
-Una clave omitida en el YAML **no** es un error: se resuelve en tiempo de ejecución al ganador
-de la fase anterior. Por eso los bloques de `exp2` no fijan `embedding.model` — lo heredan de
+A key omitted from the YAML is **not** an error: it resolves at runtime to the winner of the
+previous stage. That is why `exp2` blocks do not pin `embedding.model` — they inherit it from
 `best_embedding`.
 
-Para una **estrategia** que no exista (un tipo de chunking nuevo, un retriever distinto), el
-punto de extensión es el módulo correspondiente en `src/rag_eval/`.
+For a **strategy** that does not exist yet (a new chunking method, a different retriever), the
+extension point is the corresponding module in `src/rag_eval/`.
 
-## Estructura del código
+## Code layout
 
 ```
 src/rag_eval/
-├── pipeline_registry.py   Registro de pipelines y nodos select_best_* (arrastre de ganadores)
-├── selection.py           Lógica de elección del ganador de cada fase por P+R
+├── pipeline_registry.py   Pipeline registry and select_best_* nodes (winner carry-over)
+├── selection.py           Logic that picks each stage's winner by P+R
 ├── chunking.py            fixed_size · sentence · structural · parent-child · semantic
-├── embedding.py           Carga de embedders (HF Inference API, Scaleway, local)
-├── retrieval.py           coseno · MMR · BM25 · híbrido (RRF) · reranking CE y LLM
+├── embedding.py           Embedder loading (HF Inference API, Scaleway, local)
+├── retrieval.py           cosine · MMR · BM25 · hybrid (RRF) · CE and LLM reranking
 ├── query_transform.py     HyDE · Multi-Query · RAG-Fusion · Rewrite · Step-Back · Decomposition · Self-Query
-├── datasets.py            Datasets Kedro a medida (JSONL, knowledge graph de RAGAS)
-├── hooks.py               Integración con MLflow
+├── datasets.py            Custom Kedro datasets (JSONL, RAGAS knowledge graph)
+├── hooks.py               MLflow integration
 └── pipelines/
     ├── ingestion/ · corpus_selection/ · gold_dataset/ · rag_base/ · evaluation/
 ```
 
-## Datos
+## Data
 
-`data/` sigue la convención de capas de Kedro (`01_raw` → `08_reporting`) y **está excluido del
-repositorio**: son ~11 GB entre el corpus y los índices vectoriales, todos regenerables.
+`data/` follows the Kedro layer convention (`01_raw` → `08_reporting`) and is **excluded from
+the repository**: roughly 11 GB of corpus and vector indexes, all regenerable.
 
-Sí están versionadas las figuras y tablas finales, copiadas a
-[`resultados/`](../resultados/) en la raíz del proyecto.
+The final figures and tables are versioned, copied to [`results/`](../results/) at the project
+root.
 
 ## Notebooks
 
-| Notebook | Contenido |
+| Notebook | Contents |
 |---|---|
-| `notebooks/00_corpus_exploration.ipynb` | Análisis exploratorio del corpus EUR-Lex completo |
-| `notebooks/01_copyright_corpus.ipynb` | Caracterización del subcorpus de derecho de autor |
-| `notebooks/02_gold_dataset.ipynb` | Validación del conjunto de evaluación generado |
-| `notebooks/03_results.ipynb` | Genera todas las figuras y tablas comparativas |
+| `notebooks/00_corpus_exploration.ipynb` | Exploratory analysis of the full EUR-Lex corpus |
+| `notebooks/01_copyright_corpus.ipynb` | Characterization of the copyright subcorpus |
+| `notebooks/02_gold_dataset.ipynb` | Validation of the generated evaluation set |
+| `notebooks/03_results.ipynb` | Generates every comparative figure and table |
 
-`info/` contiene los notebooks precursores: el prototipo manual del flujo RAG, previo a su
-formalización como pipeline Kedro. Se conservan como registro del desarrollo.
+`info/` holds the precursor notebooks: the manual prototype of the RAG flow, predating its
+formalization as a Kedro pipeline. Kept as a record of how the project developed.
