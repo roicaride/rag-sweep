@@ -1,0 +1,385 @@
+%% ============================================================
+%%  Ficheiro de referencias bibliográficas — TFG RAG USC
+%% ============================================================
+
+%% ── Fundamentos de deep learning e NLP ──────────────────────
+
+@inproceedings{vaswani2017attention,
+  title     = {Attention is all you need},
+  author    = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and
+               Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and
+               Kaiser, {\L}ukasz and Polosukhin, Illia},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {30},
+  year      = {2017},
+  publisher = {Curran Associates, Inc.},
+  url       = {https://arxiv.org/abs/1706.03762}
+}
+
+@inproceedings{devlin2019bert,
+  title     = {{BERT}: Pre-training of deep bidirectional transformers for
+               language understanding},
+  author    = {Devlin, Jacob and Chang, Ming-Wei and Lee, Kenton and
+               Toutanova, Kristina},
+  booktitle = {Proceedings of the 2019 Conference of the North American
+               Chapter of the Association for Computational Linguistics:
+               Human Language Technologies, Volume 1 (Long and Short Papers)},
+  pages     = {4171--4186},
+  year      = {2019},
+  publisher = {Association for Computational Linguistics},
+  address   = {Minneapolis, Minnesota},
+  doi       = {10.18653/v1/N19-1423},
+  url       = {https://aclanthology.org/N19-1423}
+}
+
+@inproceedings{brown2020language,
+  title     = {Language models are few-shot learners},
+  author    = {Brown, Tom B. and Mann, Benjamin and Ryder, Nick and
+               Subbiah, Melanie and Kaplan, Jared and Dhariwal, Prafulla and
+               Neelakantan, Arvind and Shyam, Pranav and Sastry, Girish and
+               Askell, Amanda and Agarwal, Sandhini and Herbert-Voss, Ariel and
+               Krueger, Gretchen and Henighan, Tom and Child, Rewon and
+               Ramesh, Aditya and Ziegler, Daniel M. and Wu, Jeffrey and
+               Winter, Clemens and Hesse, Christopher and Chen, Mark and
+               Sigler, Eric and Litwin, Mateusz and Gray, Scott and
+               Chess, Benjamin and Clark, Jack and Berner, Christopher and
+               McCandlish, Sam and Radford, Alec and Sutskever, Ilya and
+               Amodei, Dario},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {33},
+  pages     = {1877--1901},
+  year      = {2020},
+  publisher = {Curran Associates, Inc.},
+  url       = {https://arxiv.org/abs/2005.14165}
+}
+
+%% ── Alucinación en LLMs ─────────────────────────────────────
+
+@article{ji2023survey,
+  title     = {Survey of hallucination in natural language generation},
+  author    = {Ji, Ziwei and Lee, Nayeon and Frieske, Rita and Yu, Tiezheng and
+               Su, Dan and Xu, Yan and Ishii, Etsuko and Bang, Ye Jin and
+               Madotto, Andrea and Fung, Pascale},
+  journal   = {ACM Computing Surveys},
+  volume    = {55},
+  number    = {12},
+  pages     = {1--38},
+  year      = {2023},
+  publisher = {ACM},
+  doi       = {10.1145/3571730}
+}
+
+%% ── RAG fundacional ─────────────────────────────────────────
+
+@inproceedings{lewis2020retrieval,
+  title     = {Retrieval-augmented generation for knowledge-intensive {NLP} tasks},
+  author    = {Lewis, Patrick and Perez, Ethan and Piktus, Aleksandra and
+               Petroni, Fabio and Karpukhin, Vladimir and Goyal, Naman and
+               K{\"u}ttler, Heinrich and Lewis, Mike and Yih, Wen-tau and
+               Rockt{\"a}schel, Tim and Riedel, Sebastian and Kiela, Douwe},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {33},
+  pages     = {9459--9474},
+  year      = {2020},
+  publisher = {Curran Associates, Inc.},
+  url       = {https://arxiv.org/abs/2005.11401}
+}
+
+%% NOTA: preprint de arXiv, non publicado en revista con revisión por pares
+@misc{gao2023retrieval,
+  title        = {Retrieval-augmented generation for large language models: {A} survey},
+  author       = {Gao, Yunfan and Xiong, Yun and Gao, Xinyu and Jia, Kangxiang and
+                  Pan, Jinliu and Bi, Yuxi and Dai, Yi and Sun, Jiawei and
+                  Wang, Meng and Wang, Haofen},
+  year         = {2023},
+  howpublished = {arXiv preprint arXiv:2312.10997},
+  url          = {https://arxiv.org/abs/2312.10997}
+}
+
+%% ── Recuperación de información ─────────────────────────────
+
+@inproceedings{karpukhin2020dense,
+  title     = {Dense passage retrieval for open-domain question answering},
+  author    = {Karpukhin, Vladimir and Oguz, Barlas and Min, Sewon and
+               Lewis, Patrick and Wu, Ledell and Edunov, Sergey and
+               Chen, Danqi and Yih, Wen-tau},
+  booktitle = {Proceedings of the 2020 Conference on Empirical Methods in
+               Natural Language Processing (EMNLP)},
+  pages     = {6769--6781},
+  year      = {2020},
+  publisher = {Association for Computational Linguistics},
+  doi       = {10.18653/v1/2020.emnlp-main.550},
+  url       = {https://aclanthology.org/2020.emnlp-main.550}
+}
+
+@article{robertson2009probabilistic,
+  title     = {The probabilistic relevance framework: {BM25} and beyond},
+  author    = {Robertson, Stephen and Zaragoza, Hugo},
+  journal   = {Foundations and Trends{\textregistered} in Information Retrieval},
+  volume    = {3},
+  number    = {4},
+  pages     = {333--389},
+  year      = {2009},
+  publisher = {Now Publishers Inc.},
+  doi       = {10.1561/1500000019}
+}
+
+%% ── Embeddings de texto ──────────────────────────────────────
+
+@inproceedings{reimers2019sentence,
+  title     = {Sentence-{BERT}: Sentence embeddings using siamese {BERT}-networks},
+  author    = {Reimers, Nils and Gurevych, Iryna},
+  booktitle = {Proceedings of the 2019 Conference on Empirical Methods in
+               Natural Language Processing and the 9th International Joint
+               Conference on Natural Language Processing (EMNLP-IJCNLP)},
+  pages     = {3982--3992},
+  year      = {2019},
+  publisher = {Association for Computational Linguistics},
+  doi       = {10.18653/v1/D19-1410},
+  url       = {https://aclanthology.org/D19-1410}
+}
+
+%% ── Reranking ────────────────────────────────────────────────
+
+%% NOTA: preprint de arXiv, non publicado formalmente
+@misc{nogueira2019passage,
+  title        = {Passage re-ranking with {BERT}},
+  author       = {Nogueira, Rodrigo and Cho, Kyunghyun},
+  year         = {2019},
+  howpublished = {arXiv preprint arXiv:1901.04085},
+  url          = {https://arxiv.org/abs/1901.04085}
+}
+
+%% ── Técnicas avanzadas RAG ───────────────────────────────────
+
+%% Publicado en ACL 2023 (versión preprint: arXiv:2212.10496, decembro 2022)
+@inproceedings{gao2022precise,
+  title     = {Precise zero-shot dense retrieval without relevance labels},
+  author    = {Gao, Luyu and Ma, Xueguang and Lin, Jimmy and Callan, Jamie},
+  booktitle = {Proceedings of the 61st Annual Meeting of the Association for
+               Computational Linguistics (Volume 1: Long Papers)},
+  pages     = {1762--1777},
+  year      = {2023},
+  publisher = {Association for Computational Linguistics},
+  doi       = {10.18653/v1/2023.acl-long.99},
+  url       = {https://aclanthology.org/2023.acl-long.99}
+}
+
+@inproceedings{asai2024self,
+  title     = {Self-{RAG}: Learning to retrieve, generate, and critique through
+               self-reflection},
+  author    = {Asai, Akari and Wu, Zeqiu and Wang, Yizhong and
+               Sil, Avirup and Hajishirzi, Hannaneh},
+  booktitle = {The Twelfth International Conference on Learning Representations},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2310.11511}
+}
+
+%% ── Avaliación ───────────────────────────────────────────────
+
+%% NOTA: preprint de arXiv, non publicado formalmente con revisión por pares
+@misc{es2023ragas,
+  title        = {{RAGAS}: Automated evaluation of retrieval augmented generation},
+  author       = {Es, Shahul and James, Jithin and Espinosa-Anke, Luis and
+                  Schockaert, Steven},
+  year         = {2023},
+  howpublished = {arXiv preprint arXiv:2309.15217},
+  url          = {https://arxiv.org/abs/2309.15217}
+}
+
+%% ── Infraestrutura vectorial ──────────────────────────────────
+
+@article{malkov2018hnsw,
+  title     = {Efficient and Robust Approximate Nearest Neighbor Search Using
+               Hierarchical Navigable Small World Graphs},
+  author    = {Malkov, Yu A. and Yashunin, D. A.},
+  journal   = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume    = {42},
+  number    = {4},
+  pages     = {824--836},
+  year      = {2020},
+  publisher = {IEEE},
+  doi       = {10.1109/TPAMI.2018.2889473}
+}
+
+@misc{qdrant2024,
+  title   = {{Qdrant}: Vector Database \& Search Engine},
+  author  = {{Qdrant}},
+  year    = {2024},
+  url     = {https://github.com/qdrant/qdrant},
+  urldate = {2024-12-01},
+  note    = {Software de código aberto}
+}
+
+%% ── Kedro ────────────────────────────────────────────────────
+
+@misc{kedro2023,
+  author       = {{QuantumBlack, AI by McKinsey}},
+  title        = {Kedro: A Python Framework for Reproducible, Maintainable and Modular Data Science Code},
+  year         = {2023},
+  url          = {https://kedro.org},
+  urldate      = {2025-05-27},
+  note         = {Software de código aberto}
+}
+
+%% ── LangChain ────────────────────────────────────────────────
+
+%% NOTA: non se cita explicitamente no texto; engadir \citep{langchain2022}
+%%       na sección 1.3.3 se se quere referenciar formalmente
+@misc{langchain2022,
+  title   = {{LangChain}: Building applications with large language models},
+  author  = {Chase, Harrison},
+  year    = {2022},
+  url     = {https://github.com/langchain-ai/langchain},
+  urldate = {2024-12-01},
+  note    = {Software de código aberto}
+}
+
+%% ── EUR-Lex ──────────────────────────────────────────────────
+
+@misc{eurlex2024,
+  title   = {{EUR-Lex}: Access to {European Union} law},
+  author  = {{Publications Office of the European Union}},
+  year    = {2024},
+  url     = {https://eur-lex.europa.eu},
+  urldate = {2024-12-01}
+}
+
+%% ── Chunking strategies ──────────────────────────────────────
+
+@misc{kamradt2023semantic,
+  title   = {Semantic chunking for {RAG}},
+  author  = {Kamradt, Greg},
+  year    = {2023},
+  url     = {https://github.com/FullStackRetrieval-com/RetrievalTutorials},
+  urldate = {2024-12-01},
+  note    = {FullStackRetrieval-com/RetrievalTutorials}
+}
+
+%% ATENCIÓN: verificar antes da entrega —
+%%   o ID arXiv:2601.14123 correspóndese con xaneiro de 2026,
+%%   incompatible co ano declarado (2024). Revisar os autores completos
+%%   e o identificador correcto do artigo.
+@misc{shi2024chunking,
+  title        = {A systematic analysis of chunking strategies for reliable
+                  question answering},
+  author       = {Shi, Jiale and others},
+  year         = {2024},
+  howpublished = {arXiv preprint},
+  note         = {VERIFICAR: identificador arXiv e lista completa de autores}
+}
+
+%% ── Modelos de embedding ─────────────────────────────────────
+
+@misc{xiao2023c,
+  title        = {{C-Pack}: Packaged Resources To Advance General {Chinese} Embedding},
+  author       = {Xiao, Shitao and Liu, Zheng and Zhang, Peitian and
+                  Muennighoff, Niklas},
+  year         = {2023},
+  howpublished = {arXiv preprint arXiv:2309.07597},
+  url          = {https://arxiv.org/abs/2309.07597}
+}
+
+@misc{wang2022text,
+  title        = {Text Embeddings by Weakly-Supervised Contrastive Pre-Training},
+  author       = {Wang, Liang and Yang, Nan and Huang, Xiaolong and
+                  Jiao, Binxing and Yang, Linjun and Jiang, Daxin and
+                  Majumder, Rangan and Wei, Furu},
+  year         = {2022},
+  howpublished = {arXiv preprint arXiv:2212.03533},
+  url          = {https://arxiv.org/abs/2212.03533}
+}
+
+@misc{chen2024m3embedding,
+  title        = {{M3-Embedding}: Multi-Linguality, Multi-Functionality,
+                  Multi-Granularity Text Embeddings Through Self-Knowledge
+                  Distillation},
+  author       = {Chen, Jianlv and Xiao, Shitao and Zhang, Peitian and
+                  Luo, Kun and Lian, Defu and Liu, Zheng},
+  year         = {2024},
+  howpublished = {arXiv preprint arXiv:2402.03216},
+  url          = {https://arxiv.org/abs/2402.03216}
+}
+
+@misc{zhang2025qwen3embedding,
+  title        = {{Qwen3 Embedding}: Advancing Text Embedding and Reranking
+                  Through Foundation Models},
+  author       = {Zhang, Yanzhao and Li, Mingxin and Long, Dingkun and
+                  Zhang, Xin and Lin, Huan and Yang, Baosong and
+                  Xie, Pengjun and Yang, An and Liu, Dayiheng and
+                  Lin, Junyang and Huang, Fei and Zhou, Jingren},
+  year         = {2025},
+  howpublished = {arXiv preprint arXiv:2506.05176},
+  url          = {https://arxiv.org/abs/2506.05176}
+}
+
+@misc{yu2024arcticembed,
+  title        = {{Arctic-Embed 2.0}: Multilingual Retrieval Without Compromise},
+  author       = {Yu, Puxuan and Merrick, Luke and Nuti, Gaurav and
+                  Campos, Daniel},
+  year         = {2024},
+  howpublished = {arXiv preprint arXiv:2412.04506},
+  url          = {https://arxiv.org/abs/2412.04506}
+}
+
+%% ── Recuperación híbrida ─────────────────────────────────────
+
+@inproceedings{cormack2009reciprocal,
+  title     = {Reciprocal rank fusion outperforms {Condorcet} and individual
+               rank learning methods},
+  author    = {Cormack, Gordon V. and Clarke, Charles L. A. and
+               Buettcher, Stefan},
+  booktitle = {Proceedings of the 32nd International {ACM} {SIGIR} Conference
+               on Research and Development in Information Retrieval},
+  pages     = {758--759},
+  year      = {2009},
+  publisher = {ACM},
+  doi       = {10.1145/1571941.1572114}
+}
+
+%% ── Dataset EUR-Lex / Propiedade intelectual ─────────────────
+
+@misc{espinosa2025alia,
+  author       = {Espinosa Zaragoza, Sergio and Maestre, Mar{\'i}a Mir{\'o} and
+                  Mu{\~n}oz Guillena, Rafael and Consuegra-Ayala, Juan Pablo},
+  title        = {{ALIA\_INTELLECTUAL\_PROPERTY} Dataset},
+  year         = {2025},
+  institution  = {Language and Information Systems Group (GPLSI) and
+                  Centro de Inteligencia Digital (CENID), University of Alicante},
+  howpublished = {\url{https://huggingface.co/datasets/gplsi/alia_intellectual_property}},
+  note         = {Financiado polo Ministerio para la Transformación Digital y de la Función
+                  Pública, cofinanciado pola UE -- NextGenerationEU, proxecto ALIA.
+                  Licenza: CC BY~4.0}
+}
+
+%% ── Arquitecturas RAG avanzadas ──────────────────────────────
+
+@misc{yan2024corrective,
+  title        = {Corrective Retrieval Augmented Generation},
+  author       = {Yan, Shi-Qi and Gu, Jia-Chen and Zhu, Yun and
+                  Ling, Zhen-Hua},
+  year         = {2024},
+  howpublished = {arXiv preprint arXiv:2401.15884},
+  url          = {https://arxiv.org/abs/2401.15884}
+}
+
+@misc{jeong2024adaptive,
+  title        = {Adaptive-{RAG}: Learning to Adapt Retrieval-Augmented Large
+                  Language Models through Question Complexity},
+  author       = {Jeong, Soyeong and Baek, Jinheon and Cho, Sukmin and
+                  Hwang, Sung Ju and Park, Jong C.},
+  year         = {2024},
+  howpublished = {arXiv preprint arXiv:2403.14403},
+  url          = {https://arxiv.org/abs/2403.14403}
+}
+
+@misc{edge2024local,
+  title        = {From Local to Global: {A} Graph {RAG} Approach to
+                  Query-Focused Summarization},
+  author       = {Edge, Darren and Trinh, Ha and Cheng, Newman and
+                  Bradley, Joshua and Chao, Alex and Mody, Apurva and
+                  Truitt, Steven and Larson, Jonathan},
+  year         = {2024},
+  howpublished = {arXiv preprint arXiv:2404.16130},
+  url          = {https://arxiv.org/abs/2404.16130}
+}

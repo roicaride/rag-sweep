@@ -1,0 +1,6 @@
+config,context_recall,context_precision,context_entity_recall,faithfulness,answer_relevancy,noise_sensitivity(mode=relevant),P+R
+mmr k10 (sen rerank),0.7107,0.3829,0.3766,0.8985,0.5898,0.4294,1.0935
+cross-encoder k5,0.7083,0.4791,0.3739,0.9241,0.5557,0.4033,1.1874
+LLM listwise k5,0.6655,0.4881,0.3809,0.9011,0.5729,0.381,1.1536
+LLM listwise k10,0.721,0.4627,0.4414,0.8896,0.5786,0.4324,1.1837
+cross-encoder k10 (gañador),0.7563,0.4466,0.3894,0.9505,0.6502,0.4082,1.2029

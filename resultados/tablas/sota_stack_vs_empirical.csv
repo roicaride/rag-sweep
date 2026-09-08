@@ -1,0 +1,4 @@
+config,context_recall,context_precision,context_entity_recall,faithfulness,answer_relevancy,noise_sensitivity(mode=relevant),P+R
+Naive RAG (exp0),0.4527,0.3037,0.3237,0.8333,0.4226,0.39,0.7564
+SOTA-papel (expSOTA),0.7077,0.3873,0.3545,0.8689,0.5664,0.4861,1.095
+Empirica (exp5b),0.7563,0.4466,0.3894,0.9505,0.6502,0.4082,1.2029

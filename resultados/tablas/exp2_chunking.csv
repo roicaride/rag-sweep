@@ -1,0 +1,7 @@
+config,context_recall,context_precision,context_entity_recall,faithfulness,answer_relevancy,noise_sensitivity(mode=relevant),P+R
+fixed 256 (gañador = baseline),0.583,0.4157,0.3838,0.8808,0.5614,0.4655,0.9987
+fixed 512,0.58,0.3332,0.3557,0.8052,0.4785,0.4254,0.9132
+sentence,0.615,0.3777,0.3615,0.8701,0.4603,0.4052,0.9927
+structural,0.4473,0.2814,0.3235,0.891,0.4601,0.3842,0.7288
+structural + parent,0.5903,0.3675,0.3484,0.849,0.4381,0.4199,0.9579
+semantic,0.5937,0.2973,0.3463,0.866,0.4619,0.4709,0.891
